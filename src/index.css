@@ -1,0 +1,50 @@
+:root {
+  --text: #d8e2f4;
+  --text-h: #f8fbff;
+  --muted: #9ca9c1;
+  --highlight: #ff7a59;
+  --border: rgba(155, 175, 211, 0.22);
+  --panel-bg: rgba(14, 28, 48, 0.7);
+  --tile-bg: rgba(9, 20, 36, 0.75);
+  --chip-bg: rgba(255, 122, 89, 0.15);
+  --chip-border: rgba(255, 122, 89, 0.55);
+
+  --sans: 'Outfit', 'Segoe UI', sans-serif;
+  --heading: 'Sora', 'Avenir Next', sans-serif;
+  --mono: 'IBM Plex Mono', 'SF Mono', monospace;
+
+  font-size: 17px;
+  font-family: var(--sans);
+  line-height: 1.55;
+  font-weight: 400;
+  color: var(--text);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  background: #081220;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--heading);
+  color: var(--text-h);
+}
+
+p {
+  margin: 0;
+}

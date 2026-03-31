@@ -1,33 +1,90 @@
 ---
-title: "Fixing Slow WSL File I/O with 9P msize Tuning"
+title: "Why WSL File I/O Feels Slow (and the 9P Fix That Nearly Doubled Throughput)"
 date: "2026-03-31"
-excerpt: "How auditing 9P protocol limits between Linux and Windows in WSL led to a 2x improvement in cross-boundary file I/O speeds."
+excerpt: "A practical breakdown of why WSL cross-boundary file operations feel slow, the 9P bottlenecks behind it, and the tuning changes that produced near-2x throughput gains."
 tags: [wsl, windows, 9p]
 published: true
 publishAt: ""
 ---
 
-Cross-boundary file I/O in WSL has always been a noticeable bottleneck in my workflow. Moving large amounts of data between Linux and Windows always felt sluggish compared to native operations.
+You run `npm install` in WSL on a repo living on `C:\`, and your terminal just sits there.
 
-I pushed a fix for this in commit [`badaa3271343`](https://github.com/Dark-Matter7232/WSL/commit/badaa3271343). By auditing the actual source-level constraints in both WSL and Linux, I dug into the 9P limits and adjusted them to match the underlying transport layers.
+`git checkout` feels sticky. Bulk copies crawl. Simple file metadata calls add up into visible lag.
+
+If that sounds familiar, this is the exact bottleneck I chased.
+
+I pushed a fix in commit [`badaa3271343`](https://github.com/Dark-Matter7232/WSL/commit/badaa3271343) after auditing where cross-boundary throughput was being capped in both WSL and Linux 9P paths.
+
+The short version: this was not a transport rewrite. It was a targeted tuning pass that aligned protocol limits with what the transport could already handle, removing avoidable fragmentation and overhead.
 
 > [!NOTE]
-> Just a heads up: this wasn't some massive rewrite to switch transport protocols. It was strictly an in-place tuning pass to get the absolute most out of the existing WSL paths.
+> This post is about tuning existing WSL paths, not replacing 9P or changing overall WSL architecture.
+
+## What this post covers
+
+1. A simple mental model for where WSL cross-boundary overhead comes from
+2. The specific caps that limited throughput
+3. The concrete changes made in WSL code
+4. Benchmarks, results, and why the improvement happened
+5. Practical advice you can reuse when debugging similar bottlenecks
+
+> [!IMPORTANT]
+> **Core insight in one line:**
+> `effective_msize = min(requested_msize, transport_maxsize, negotiated_server_msize)`
+>
+> Most of the slowdown came from layered caps fighting each other. Raising one limit helped only when all the other limits were aligned.
 
 ![9P transport tuning benchmark visual](/blog/wsl-9p-transport-tuning.svg "Throughput before and after 9P msize and buffer tuning")
 
-## Background: what 9P does in WSL
+## The pain in real workflows
+
+Cross-boundary slowdown is not theoretical. It hits common developer loops:
+
+- package managers (`npm`, `pnpm`, etc.) touching many small files
+- `git` operations over large working trees
+- toolchains doing repeated metadata reads (`stat`, `open`, `readdir`)
+- bulk copy/sync between WSL and Windows paths
+
+When these operations cross the Linux/Windows boundary, latency and fragmentation compound quickly.
+
+## Mental model first: where the slowdown comes from
 
 WSL uses the 9P protocol to handle cross-boundary file operations. Every time you open, read, write, or stat a file, messages are passed back and forth between the host and guest using 9P.
 
-This means the actual transfer throughput isn't just up to raw disk speed. It's bottlenecked by how large a single 9P message can be, how those messages are negotiated, and the transport-level buffers sitting underneath the protocol.
+So throughput is not just "disk speed." It is also constrained by packet sizing and queue behavior.
 
-## The Key Knob: `msize`
+Simple model:
+
+```text
+larger transfer
+  -> split into 9P messages
+  -> each message crosses the boundary
+  -> more messages = more overhead
+
+effective throughput ~= useful bytes / (protocol overhead + boundary transitions + queue stalls)
+```
+
+And the key point: if your payload size is capped too low, you force extra fragmentation even when the transport could carry more.
+
+### Boundary flow at a glance
+
+```text
+[Linux process]
+	|
+	| read/write/stat
+	v
+[9P client in guest] --(packet size capped by msize)--> [transport queue/buffer] ---> [Windows host 9P side]
+										     |
+										     v
+									     [NTFS or host FS]
+```
+
+## The key knob: `msize`
 
 `msize` is the payload size for 9P packets on the client side.
 
 - smaller `msize` -> more packets for the same transfer
-- larger `msize` -> fewer packets, less protocol overhead
+- larger `msize` -> fewer packets and lower per-byte protocol overhead
 
 But `msize` is bounded.
 
@@ -43,13 +100,29 @@ So in practice, the real `msize` is always the minimum of your request, the tran
 effective_msize = min(requested_msize, transport_maxsize, negotiated_server_msize);
 ```
 
-## Working With What We Have
+This one equation explains most of the bottleneck: setting a larger value in one place does nothing if another layer silently clamps it.
+
+## Constraints: what I could and could not change
+
+Micro-summary: I could not swap transports, so the win had to come from removing avoidable limits in the active path.
 
 WSL currently falls back to `trans=fd` for its active 9P transport. The `trans=virtio` path is theoretically faster, but that route is currently disabled upstream by Microsoft due to an undisclosed bug.[^commit]
 
-Because swapping to a better transport wasn't an option, I had to optimize the existing `trans=fd` paths. When I looked at the codebase, I found the throughput loss was almost entirely due to overly conservative hardcoded caps. The guest-to-host request cap on `\\wsl$` was incredibly low, and the `trans=fd` path was negotiating way below what the host actually allowed. On top of that, the protocol payload size and socket memory allocation were awkwardly tied together. 
+Because transport replacement was off the table, I optimized `trans=fd` and related caps in-place.
 
-I went through the constraints one by one and untangled them.
+When I traced the path, the throughput loss came from conservative hardcoded ceilings:
+
+- guest-to-host request cap on `\\wsl$` was low
+- `trans=fd` negotiation was effectively stuck far below host allowance
+- protocol payload sizing and socket memory sizing were coupled, which blocked clean tuning
+
+In other words, the system had headroom, but configuration ceilings prevented reaching it.
+
+## What changed
+
+Micro-summary: I raised each bottleneck to the highest constraint-backed value, then decoupled protocol payload tuning from transport buffer tuning.
+
+I went through each cap and adjusted it to match real transport constraints.
 
 ### 1. Guest to Host (`Windows -> \wsl$`)
 
@@ -67,7 +140,9 @@ MaximumRequestBufferSize = 256 * 1024;
 MaximumRequestBufferSize = 1024 * 1024;
 ```
 
-In the WSL plan9 handler, the `Tversion` size is clamped using this constant. If this cap is left too low, larger operations fragment way earlier than necessary. Raising it up to 1 MiB removes that artificial ceiling.
+In the WSL plan9 handler, `Tversion` size is clamped using this constant. At `256 KiB`, larger operations fragmented earlier than necessary. Raising it to `1 MiB` removes that artificial early ceiling for this direction.
+
+Why this matters: fewer early splits on large operations.
 
 ### 2. Host to Guest (`trans=fd`)
 
@@ -82,7 +157,7 @@ Protocol side:
 - before: effectively `64 KiB`
 - after: `256 KiB` (`262,144`) via `LX_INIT_UTILITY_VM_PLAN9_MSIZE_FD`
 
-I chose `256 KiB` because `262,144` is the Windows host negotiation cap for this path. Bumping it to `256 KiB` sets it to the highest useful value allowed by the host negotiation logic.
+I chose `256 KiB` because `262,144` is the host negotiation ceiling for this path. This sets protocol payload size to the highest useful value accepted by negotiation.
 
 Transport buffer side:
 
@@ -95,9 +170,11 @@ LX_INIT_UTILITY_VM_PLAN9_MSIZE_FD: 65536 -> 262144
 LX_INIT_UTILITY_VM_PLAN9_BUFFER_SIZE: 65536 -> 131072
 ```
 
-The main flaw here was that `msize` (the protocol payload size) and the socket buffer (handling transport queue memory behavior) were tied together. This forced a tradeoff where you either had to accept low protocol throughput or risk aggressive buffer sizing. I wrote a patch to separate these knobs so they could be tuned independently.
+The core flaw here was coupling: `msize` (protocol payload) and socket buffer sizing (queue behavior) were tied together. That forced a bad tradeoff: keep payloads small, or push memory behavior too aggressively. I separated these knobs so protocol and transport could be tuned independently.
 
-I pushed the buffer from 64 KiB to `128 KiB` to improve chunk streaming and prevent transfers from fragmenting under pressure. I intentionally stopped at 128 KiB instead of maxing it out to 256 KiB, because Linux internally doubles the socket buffer. A 128 KiB buffer naturally aligns with the `trans=fd` protocol-side `msize` target of `256 KiB` (`262,144`).
+I then moved buffer size from `64 KiB` to `128 KiB`. I stopped at `128 KiB` intentionally because Linux internally doubles socket buffer accounting. This lines up naturally with the `256 KiB` protocol-side `msize` target (`262,144`) without overcommitting memory.
+
+Why this matters: larger payloads plus stable queue behavior under sustained transfer.
 
 ### 3. Host to Guest (`trans=virtio` path)
 
@@ -113,7 +190,7 @@ This specific number comes straight from the Linux 9P virtio transport (`net/9p/
 With `PAGE_SIZE=4096` and `VIRTQUEUE_NUM=128`, that evaluates to `512000` exactly.
 
 > [!TIP]
-> Because this cap is derived directly from kernel constraints, it's safer than arbitrarily picking a larger value.
+> This cap comes directly from kernel constraints, which is safer than choosing an arbitrary larger value.
 
 ```collapse-text
 # @title: Virtio maxsize derivation
@@ -121,24 +198,51 @@ PAGE_SIZE * (VIRTQUEUE_NUM - 3)
 4096 * (128 - 3) = 512000
 ```
 
-## The Results
+## Why these changes work
 
-At the end of the day, all these tweaks do is reduce avoidable packet fragmentation in hot paths. Fewer fragments mean fewer protocol messages, which naturally leads to fewer cross-boundary transitions and significantly higher sustained throughput.
+Micro-summary: align every layer, then fragmentation drops naturally.
+
+Each adjustment reduces avoidable fragmentation at a different layer:
+
+- larger negotiated payloads -> fewer 9P messages per transfer
+- fewer messages -> fewer boundary transitions and less per-message overhead
+- better buffer sizing -> smoother queue behavior under sustained transfer
+
+This is the "aha": throughput improved not from a new architecture, but from removing layered caps that were accidentally fighting each other.
+
+## Benchmarks and results
+
+I benchmarked before and after on the same machine/workload profile used during validation of the patch.
+
+Method summary:
+
+- compared both directions: `WSL -> C:\` and `C:\ -> WSL`
+- measured sustained throughput for large sequential transfers
+- ran with old constants vs patched constants
+
+Results:
 
 | Direction | Before | After | Improvement |
 | --- | --- | --- | --- |
 | WSL -> `C:\` | 124 MB/s | 238 MB/s | +92% |
 | `C:\` -> WSL | 185 MB/s | 365 MB/s | +97% |
 
-That's a near-2x improvement in both directions.
+That is near-2x in both directions.
 
-## The Takeaway
+## Practical takeaway
 
-This whole debugging session was a good reminder of how much performance gets bottlenecked simply by conservative defaults. 
+If you are debugging cross-boundary I/O in WSL, start with these questions:
 
-When I dug into the source code, I realized the fix didn't require pulling apart the architecture or rewriting drivers. It just came down to matching the 9P caps to what the underlying transport could actually handle. 
+1. Where is `msize` requested?
+2. Where is it clamped by transport?
+3. What does negotiation actually settle on?
+4. Are protocol payload and transport buffer knobs coupled?
 
-Sometimes, resolving a massive bottleneck isn't about complex micro-optimizations. It is just about looking under the hood and bumping a few hardcoded numbers.
+Most of the time, your effective ceiling is the minimum of several layers, not the value you set in one config path.
+
+This case is a good reminder: substantial gains can come from reading constraints end-to-end and aligning them, even without changing the high-level architecture.
+
+Memorable rule of thumb: **performance bottlenecks often hide in the minimum, not the maximum.**
 
 ## Change summary (before -> after)
 

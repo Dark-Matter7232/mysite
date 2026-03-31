@@ -7,19 +7,21 @@ published: true
 publishAt: ""
 ---
 
-I got my Kindle Basic 10th Gen in 2021. I loved it for a while, read around 8 books on it, got bored of it, and then it sat down in my drawer for years. 
+I got my Kindle Basic 10th Gen in 2021. I loved it for a while, read around 8 books on it, got bored of it, and then it sat in my drawer for years.
 
 Fast forward to October 2025. I moved to Greater Noida for my BCA program and brought the Kindle with me to re-kindle (pun intended!) my love for reading. Even then, it sat collecting dust until March 29th, 2026. 
 
 I was cleaning my work desk that day and noticed this beautiful piece of hardware sitting in a drawer, so I decided to fire it up. The battery was completely dead. I charged it, and as soon as it booted into the old, familiar 'kid under a tree' logo, memories started rushing back. I thought about how Ari felt when he met Dante, and everything else I had felt reading those early books.
 
-But soon, I noticed a problem. The Kindle's default UI was plagued with issues:
+That feeling lasted maybe five minutes. Then I remembered why I’d stopped using it.
+
+The Kindle's default UI was plagued with issues:
 - Performance was really bad.
 - PDF rendering was messy and sluggish.
 - Amazon book store ads cluttered the UI, making it difficult to actually focus and read something.
 - UI navigation was difficult, and the reading experience felt very artificially limiting.
 
-This post isn't just a guide on how I jailbroke my Kindle. It's a deep dive into what happens when you strip away the Amazon framework and treat the Kindle for what it really is: a highly constrained, portable e-ink Linux machine.
+This post isn't just a guide on how I jailbroke my Kindle. It's what I discovered after stripping away the Amazon framework and treating the Kindle for what it really is: a highly constrained, portable e-ink Linux machine.
 
 **Here is what you will gain from this post:**
 - **Demystifying the Exploit:** A look into how the LanguageBreak jailbreak uses Amazon's own demo mode against itself.
@@ -28,6 +30,18 @@ This post isn't just a guide on how I jailbroke my Kindle. It's a deep dive into
 - **System-Level Tuning:** Practical ways to tune an embedded system with only 512MB RAM, including killing bloatware, configuring ZRAM swap to prevent crashes, and managing CPU governors.
 
 If you've ever wanted to truly own your Kindle hardware and look under the hood, here is exactly what I discovered.
+
+## Mental model: what jailbreaking actually unlocks
+
+Jailbreaking did not magically make the Kindle faster.
+
+What it did give me was control in three places:
+
+1. Interface layer: I could replace the stock UI with KOReader and my own tools.
+2. Runtime layer: I could get a persistent shell and make terminal behavior predictable.
+3. System layer: I could tune CPU, memory, and background services instead of living with default policies.
+
+That shift, from just using the device to actually controlling it, is the real discovery in this post.
 
 ## The Starting Point
 
@@ -270,7 +284,9 @@ The same applied when accessing the system remotely. Thanks to the built-in SSH 
 
 What I wanted was simple:
 
-One consistent shell across KOReader and SSH.
+the exact same shell experience in both places (KOReader terminal and SSH).
+
+If I run a command in one place, it should behave the same in the other.
 
 `Same prompt, same aliases, same behavior everywhere.`
 
@@ -890,4 +906,8 @@ By the end, I had:
 5. **Gained proper persistent terminal access** with a tailored BusyBox `ash` config.
 6. **Set up wireless file management** via an embedded web server.
 
-Now, whether I'm diving back into Aristotle and Dante or skimming through a heavy technical PDF, the device finally has a simple, resource-light UI. More importantly, it feels like *mine*. Digging into the internals gave me a much deeper appreciation for constrained embedded Linux environments, turning a dusty e-reader into a genuinely fun hacking project.
+Now, whether I'm diving back into Aristotle and Dante or skimming through a heavy technical PDF, the device finally has a simple, resource-light UI.
+
+More importantly, it feels like *mine*.
+
+Digging into the internals gave me a much deeper appreciation for constrained embedded Linux environments, turning a dusty e-reader into a genuinely fun hacking project.

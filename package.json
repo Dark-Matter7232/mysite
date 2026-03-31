@@ -4,15 +4,24 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview",
-    "deploy": "bun run build && bunx wrangler pages deploy dist"
+    "predev": "bun run blog:meta",
+    "dev": "bunx --bun vite",
+    "prebuild": "bun run blog:meta && bun run sitemap:generate && bun run rss:generate",
+    "build": "bunx --bun tsc -b && bunx --bun vite build",
+    "lint": "bunx --bun eslint .",
+    "preview": "bunx --bun vite preview",
+    "deploy": "bun run build && bunx wrangler pages deploy dist",
+    "blog:new": "bun run scripts/new-blog.ts",
+    "blog:meta": "bun run scripts/generate-blog-meta.ts",
+    "sitemap:generate": "bun run scripts/generate-sitemap.ts",
+    "rss:generate": "bun run scripts/generate-rss.ts"
   },
   "dependencies": {
     "react": "^19.2.4",
-    "react-dom": "^19.2.4"
+    "react-dom": "^19.2.4",
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.13.2",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
@@ -24,6 +33,7 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
+    "sharp": "^0.34.5",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.56.1",
     "vite": "^8.0.0"

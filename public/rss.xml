@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Anurag Rai Blog</title>
+    <link>https://anuragrai.cv/blog</link>
+    <description>Technical notes on systems, full stack engineering, and performance work.</description>
+    <language>en-us</language>
+    <item>
+      <title>Why I Jailbroke My Kindle (and What I Discovered)</title>
+      <link>https://anuragrai.cv/blog/why-i-jailbroke-my-kindle-and-what-i-discovered</link>
+      <guid>https://anuragrai.cv/blog/why-i-jailbroke-my-kindle-and-what-i-discovered</guid>
+      <pubDate>Tue, 31 Mar 2026 00:00:00 GMT</pubDate>
+      <description>Write a one-line summary of this post.</description>
+    </item>
+
+    <item>
+      <title>Fixing Slow WSL File I/O with 9P msize Tuning</title>
+      <link>https://anuragrai.cv/blog/wsl-cross-boundary-io</link>
+      <guid>https://anuragrai.cv/blog/wsl-cross-boundary-io</guid>
+      <pubDate>Tue, 31 Mar 2026 00:00:00 GMT</pubDate>
+      <description>A practical deep dive into WSL cross-boundary 9P performance: where throughput was lost, how Linux and WSL limits interact, and why precise cap tuning achieved near-2x gains.</description>
+    </item>
+
+    <item>
+      <title>From Systems Thinking to Full Stack</title>
+      <link>https://anuragrai.cv/blog/systems-to-fullstack</link>
+      <guid>https://anuragrai.cv/blog/systems-to-fullstack</guid>
+      <pubDate>Wed, 25 Mar 2026 00:00:00 GMT</pubDate>
+      <description>How a systems mindset influences the way I design frontend and backend features.</description>
+    </item>
+  </channel>
+</rss>

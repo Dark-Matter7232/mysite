@@ -231,6 +231,9 @@ Patches:
 * **browser-folder-cover.lua**: Adds cover images to mosaic folder entries using the first cover from the current sort order.
 * **kobo-style-screensaver.lua**: Applies a Kobo-style screensaver (my favorite patch).
 
+Dictionaries:
+* **Webster's 1913 Dictionary**: Since Amazon's default dictionaries don't work inside KOReader, I downloaded the classic Webster's 1913 dictionary in Stardict format (which KOReader natively supports). It's incredibly thorough and pairs perfectly with reading older texts.
+
 With the reading experience finally fixed, it was time to look under the hood. To truly tune the Kindle's Linux core, I needed a proper shell.
 
 ## Building a usable terminal emulator
@@ -466,6 +469,18 @@ Not broken, just… constrained.
 
 Given the hardware (~512MB RAM, weak CPU, slow eMMC, and a bunch of background services), I stopped tweaking randomly and started looking at what the system was actually doing.
 
+### Unlocking the Root Filesystem
+
+To fully optimize the device, I needed to get past Amazon's default security. The Kindle's root Linux filesystem is mounted read-only by default. 
+
+I actually had to bypass this earlier when creating the `/usr/bin/ashwrap` terminal wrapper, but it became even more important for the kernel and memory tweaks. To save any system changes across reboots or write to anything outside the `/mnt/us` user storage partition, I had to run a simple built-in command:
+
+```bash
+mntroot rw
+```
+
+Once that was executed, the filesystem became read-writable. With the system wide open, the real hacking could begin.
+
 ### CPU governor problem
 
 Manually, this worked great:
@@ -607,6 +622,89 @@ You want:
 service stop/waiting
 ```
 
+### Tying It All Together: The Init Script
+
+Running these commands manually every time I booted the Kindle wasn't going to cut it. Because the device uses `upstart` for its init system, I wrote a custom service to bind all of these tweaks together and automate the process. 
+
+I placed this in `/etc/init/perf-tweaks.conf`:
+
+```collapse-bash
+// @title: /etc/init/perf-tweaks.conf
+# Performance tweaks (final, event-driven, perfd-aware)
+
+start on started perfd
+stop on stopping perfd
+
+script
+    exec >> /tmp/perf-tweaks.log 2>&1
+    set -x
+
+    (
+        # ---------------------------
+        # Stage 1: early tweaks
+        # ---------------------------
+        sleep 5
+
+        # VM tuning
+        echo 65 > /proc/sys/vm/swappiness
+        echo 10 > /proc/sys/vm/vfs_cache_pressure
+        echo 5 > /proc/sys/vm/dirty_background_ratio
+        echo 10 > /proc/sys/vm/dirty_ratio
+        echo 8192 > /proc/sys/vm/min_free_kbytes
+
+        # ZRAM
+        if [ -e /sys/block/zram0 ]; then
+            echo lzo > /sys/block/zram0/comp_algorithm 2>/dev/null || true
+            echo 134217728 > /sys/block/zram0/disksize 2>/dev/null || true
+            mkswap /dev/zram0 2>/dev/null || true
+            swapon -p 65 /dev/zram0 2>/dev/null || true
+        fi
+
+        # Stop unnecessary daemons
+        for svc in fastmetrics iohwlogs printklogs stackdumpd contentpackd \
+                   ttsorchestrator playermgr playermgr_limit progressivedownloads \
+                   btfd whisperstore syslog; do
+            initctl stop $svc 2>/dev/null || true
+        done
+
+        # ---------------------------
+        # Stage 2: wait for perfd to finish (detect ondemand)
+        # ---------------------------
+        CPU_PATH="/sys/devices/system/cpu/cpu0/cpufreq"
+
+        while true; do
+            if [ -f "$CPU_PATH/scaling_governor" ]; then
+                GOV=$(cat "$CPU_PATH/scaling_governor" 2>/dev/null)
+
+                if [ "$GOV" = "ondemand" ]; then
+                    break
+                fi
+            fi
+            sleep 1
+        done
+
+        # ---------------------------
+        # Stage 3: final override
+        # ---------------------------
+        echo interactive > "$CPU_PATH/scaling_governor"
+
+        # safety reapply
+        sleep 5
+        echo interactive > "$CPU_PATH/scaling_governor" 2>/dev/null || true
+
+        # ---------------------------
+        # Drop caches after full settle
+        # ---------------------------
+        sleep 30
+        echo 3 > /proc/sys/vm/drop_caches
+
+    ) &
+
+end script
+```
+
+This single script waits for Amazon's `perfd` daemon to start, immediately jumps in to apply memory configurations and kill the telemetry bloatware, patiently waits for the CPU governor to settle like we talked about earlier, locks it to `interactive`, and finally flushes the system caches to free up maximum RAM.
+
 ## Writing a Custom System Fetch
 
 ```carousel
@@ -645,41 +743,119 @@ So the script had to avoid all of that.
 // @title: kfetch
 #!/bin/sh
 
-# clear screen (no terminfo dependency)
+# ---------- CLEAR ----------
 printf "\033[2J\033[H"
 
+# ---------- COLORS ----------
+B="$(printf '\033[1;34m')"
+G="$(printf '\033[1;32m')"
+Y="$(printf '\033[1;33m')"
+C="$(printf '\033[1;36m')"
+R="$(printf '\033[1;31m')"
+W="$(printf '\033[0m')"
+
+# ---------- SYSTEM ----------
 HOST=$(hostname)
 KERNEL=$(uname -r)
+ARCH=$(uname -m)
 UPTIME=$(uptime | sed 's/.*up \([^,]*\), .*/\1/')
+LOAD=$(cat /proc/loadavg | awk '{print $1 " " $2 " " $3}')
 
-GOV=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null)
+CPU_MODEL=$(grep -m1 "model name" /proc/cpuinfo | cut -d: -f2 | sed 's/^ //')
 
+# ---------- CPU USAGE ----------
+read cpu u n s i rest < /proc/stat
+sleep 1
+read cpu2 u2 n2 s2 i2 rest2 < /proc/stat
+
+TOTAL1=$((u+n+s+i))
+TOTAL2=$((u2+n2+s2+i2))
+
+DIFF_TOTAL=$((TOTAL2 - TOTAL1))
+DIFF_IDLE=$((i2 - i))
+
+if [ "$DIFF_TOTAL" -eq 0 ]; then
+    CPU_USAGE=0
+else
+    CPU_USAGE=$(( (100 * (DIFF_TOTAL - DIFF_IDLE)) / DIFF_TOTAL ))
+fi
+
+# ---------- CPU FREQ + GOV ----------
+CPU_FREQ="N/A"
+CPU_MAX="N/A"
+GOV="N/A"
+
+[ -f /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq ] && \
+CPU_FREQ=$(awk '{print int($1/1000)" MHz"}' /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq)
+
+[ -f /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq ] && \
+CPU_MAX=$(awk '{print int($1/1000)" MHz"}' /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq)
+
+[ -f /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor ] && \
+GOV=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor)
+
+# ---------- MEMORY ----------
 MEM_TOTAL=$(grep MemTotal /proc/meminfo | awk '{print int($2/1024)" MB"}')
 MEM_FREE=$(grep MemAvailable /proc/meminfo | awk '{print int($2/1024)" MB"}')
 
-# correct storage path
+# ---------- ZRAM ----------
+ZRAM="Not active"
+if grep -q zram /proc/swaps 2>/dev/null; then
+    ZRAM_USED=$(grep zram /proc/swaps | awk '{print int($4/1024)" MB"}')
+    ZRAM_TOTAL=$(grep zram /proc/swaps | awk '{print int($3/1024)" MB"}')
+    ZRAM="$ZRAM_USED / $ZRAM_TOTAL"
+fi
+
+# ---------- DISK ----------
 if df -h /mnt/us >/dev/null 2>&1; then
     DISK=$(df -h /mnt/us | awk 'NR==2 {print $3 "/" $2}')
 else
     DISK=$(df -h / | awk 'NR==2 {print $3 "/" $2}')
 fi
 
+# ---------- BATTERY ----------
 BAT=$(cat /sys/class/power_supply/*/capacity 2>/dev/null)
+BAT_STATUS=$(cat /sys/class/power_supply/*/status 2>/dev/null)
 
+# ---------- ASCII ----------
 printf "\n"
-printf "Kindle (jailbroken)\n"
-printf "-------------------------\n"
-printf "Host      : %s\n" "$HOST"
-printf "Kernel    : %s\n" "$KERNEL"
-printf "Uptime    : %s\n" "$UPTIME"
+printf "${C}        ┌──────────────────────┐\n"
+printf "        │       KINDLE 🔓      │\n"
+printf "        │    ┌────────────┐    │\n"
+printf "        │    │  JAILBREAK │    │\n"
+printf "        │    │    MODE    │    │\n"
+printf "        │    └────────────┘    │\n"
+printf "        │   root@kindle# _     │\n"
+printf "        └──────────────────────┘${W}\n"
 
-printf "\n"
-printf "CPU       : %s\n" "$GOV"
-printf "Memory    : %s / %s\n" "$MEM_FREE" "$MEM_TOTAL"
-printf "Storage   : %s\n" "$DISK"
-printf "Battery   : %s%%\n" "${BAT:-N/A}"
+# ---------- OUTPUT ----------
+printf "\n${B}  System${W}\n"
+printf "  ─────────────────────────\n"
+printf "  ${G}Host      ${W}: %s\n" "$HOST"
+printf "  ${G}Kernel    ${W}: %s\n" "$KERNEL"
+printf "  ${G}Arch      ${W}: %s\n" "$ARCH"
+printf "  ${G}Uptime    ${W}: %s\n" "$UPTIME"
+printf "  ${G}Load      ${W}: %s\n" "$LOAD"
 
-printf "\n"
+printf "\n${B}  CPU${W}\n"
+printf "  ─────────────────────────\n"
+printf "  ${Y}Model     ${W}: %s\n" "$CPU_MODEL"
+printf "  ${Y}Usage     ${W}: %s%%\n" "$CPU_USAGE"
+printf "  ${Y}Governor  ${W}: %s\n" "$GOV"
+printf "  ${Y}Freq      ${W}: %s / %s\n" "$CPU_FREQ" "$CPU_MAX"
+
+printf "\n${B}  Memory${W}\n"
+printf "  ─────────────────────────\n"
+printf "  ${Y}RAM       ${W}: %s / %s\n" "$MEM_FREE" "$MEM_TOTAL"
+printf "  ${Y}zRAM      ${W}: %s\n" "$ZRAM"
+
+printf "\n${B}  Device${W}\n"
+printf "  ─────────────────────────\n"
+printf "  ${C}Storage   ${W}: %s\n" "$DISK"
+printf "  ${C}Battery   ${W}: %s%% (%s)\n" "${BAT:-N/A}" "${BAT_STATUS:-Unknown}"
+
+printf "\n  ─────────────────────────\n"
+printf "  ${R}UNLOCKED SYSTEM ⚡ ROOT ACCESS GRANTED${W}\n\n"
 ```
 
 With the core system optimized and the terminal environment fully built out, there was only one friction point left: moving the actual payload (books) onto the device.

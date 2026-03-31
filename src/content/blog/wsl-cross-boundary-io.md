@@ -28,11 +28,13 @@ The short version: this was not a transport rewrite. It was a targeted tuning pa
 4. Benchmarks, results, and why the improvement happened
 5. Practical advice you can reuse when debugging similar bottlenecks
 
-> [!IMPORTANT]
-> **Core insight in one line:**
-> `effective_msize = min(requested_msize, transport_maxsize, negotiated_server_msize)`
->
-> Most of the slowdown came from layered caps fighting each other. Raising one limit helped only when all the other limits were aligned.
+
+**Core insight in one line:**
+
+> [!INFO] 
+> effective_msize = min(requested_msize, transport_maxsize, negotiated_server_msize)
+
+What I found was that the system wasn’t slow because of one bad limit, but because several of them were out of sync. Fixing one in isolation didn’t help, because something else would immediately take its place as the bottleneck.
 
 ![9P transport tuning benchmark visual](/blog/wsl-9p-transport-tuning.svg "Throughput before and after 9P msize and buffer tuning")
 

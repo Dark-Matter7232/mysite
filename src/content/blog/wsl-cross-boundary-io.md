@@ -1,36 +1,28 @@
 ---
 title: "Fixing Slow WSL File I/O with 9P msize Tuning"
 date: "2026-03-31"
-excerpt: "A practical deep dive into WSL cross-boundary 9P performance: where throughput was lost, how Linux and WSL limits interact, and why precise cap tuning achieved near-2x gains."
+excerpt: "How auditing 9P protocol limits between Linux and Windows in WSL led to a 2x improvement in cross-boundary file I/O speeds."
 tags: [wsl, windows, 9p]
 published: true
 publishAt: ""
 ---
 
-Cross-boundary file I/O in WSL was slowing down my daily workflow. Compute was fast, tooling was fast, but moving data between Linux and Windows remained a bottleneck.
+Cross-boundary file I/O in WSL has always been a noticeable bottleneck in my workflow. Moving large amounts of data between Linux and Windows always felt sluggish compared to native operations.
 
-I fixed this in commit [`badaa3271343`](https://github.com/Dark-Matter7232/WSL/commit/badaa3271343) by tuning 9P limits based on actual source-level constraints in both WSL and Linux.
+I pushed a fix for this in commit [`badaa3271343`](https://github.com/Dark-Matter7232/WSL/commit/badaa3271343). By auditing the actual source-level constraints in both WSL and Linux, I dug into the 9P limits and adjusted them to match the underlying transport layers.
 
-This post explains what changed and why, in plain engineering terms.
-
-> [!INFO]
-> This was an in-place tuning pass on active WSL paths, not a transport-switch project.
+> [!NOTE]
+> Just a heads up: this wasn't some massive rewrite to switch transport protocols. It was strictly an in-place tuning pass to get the absolute most out of the existing WSL paths.
 
 ![9P transport tuning benchmark visual](/blog/wsl-9p-transport-tuning.svg "Throughput before and after 9P msize and buffer tuning")
 
 ## Background: what 9P does in WSL
 
-WSL uses the 9P protocol for cross-boundary file operations.
+WSL uses the 9P protocol to handle cross-boundary file operations. Every time you open, read, write, or stat a file, messages are passed back and forth between the host and guest using 9P.
 
-Think of 9P as the message format used when one side asks the other side to do file work (open, read, write, stat, readdir, etc.).
+This means the actual transfer throughput isn't just up to raw disk speed. It's bottlenecked by how large a single 9P message can be, how those messages are negotiated, and the transport-level buffers sitting underneath the protocol.
 
-That means throughput depends not only on storage speed, but also on:
-
-- how large each 9P message can be
-- how messages are negotiated
-- transport-level limits and buffers underneath
-
-## The key knob: `msize`
+## The Key Knob: `msize`
 
 `msize` is the payload size for 9P packets on the client side.
 
@@ -44,32 +36,22 @@ From Linux kernel behavior (`net/9p/client.c`)[^client]:
 1. requested `msize` is clamped to transport `maxsize`
 2. then `TVERSION` negotiation can reduce it again to what the server accepts
 
-So effective `msize` is always bounded by client request, transport max, and server negotiation.
+So in practice, the real `msize` is always the minimum of your request, the transport limit, and the server's limit:
 
 ```c
 // effective msize is bounded in practice
 effective_msize = min(requested_msize, transport_maxsize, negotiated_server_msize);
 ```
 
-## Constraint that shaped this work
+## Working With What We Have
 
-> [!NOTE]
-> In this WSL context, `trans=fd` was the active path. `trans=virtio` can be faster in theory, but that route is disabled upstream on WSL side due to an undisclosed bug.[^commit]
+WSL currently falls back to `trans=fd` for its active 9P transport. The `trans=virtio` path is theoretically faster, but that route is currently disabled upstream by Microsoft due to an undisclosed bug.[^commit]
 
-So this was not a transport-switch project. It was an in-place optimization of active paths.
+Because swapping to a better transport wasn't an option, I had to optimize the existing `trans=fd` paths. When I looked at the codebase, I found the throughput loss was almost entirely due to overly conservative hardcoded caps. The guest-to-host request cap on `\\wsl$` was incredibly low, and the `trans=fd` path was negotiating way below what the host actually allowed. On top of that, the protocol payload size and socket memory allocation were awkwardly tied together. 
 
-## Root cause
+I went through the constraints one by one and untangled them.
 
-Throughput loss came from conservative caps that did not match real limits:
-
-1. guest-to-host request cap was low on `\\wsl$` path
-2. `trans=fd` negotiated below host-allowed maximum
-3. virtio-mounted path used a conservative value below transport-safe limit
-4. protocol sizing and socket allocation were effectively coupled in fd path
-
-## Implementation details
-
-### 1) Guest -> host (`Windows -> \\wsl$`)
+### 1. Guest to Host (`Windows -> \wsl$`)
 
 File: `src/linux/plan9/p9handler.cpp`
 
@@ -85,11 +67,9 @@ MaximumRequestBufferSize = 256 * 1024;
 MaximumRequestBufferSize = 1024 * 1024;
 ```
 
-Why this change:
+In the WSL plan9 handler, the `Tversion` size is clamped using this constant. If this cap is left too low, larger operations fragment way earlier than necessary. Raising it up to 1 MiB removes that artificial ceiling.
 
-In WSL plan9 handler, `Tversion` size is clamped using this constant. If this cap is low, larger operations fragment earlier than necessary. Raising it removes that artificial ceiling.
-
-### 2) Host -> guest (`trans=fd`)
+### 2. Host to Guest (`trans=fd`)
 
 Files:
 
@@ -102,9 +82,7 @@ Protocol side:
 - before: effectively `64 KiB`
 - after: `256 KiB` (`262,144`) via `LX_INIT_UTILITY_VM_PLAN9_MSIZE_FD`
 
-Why exactly `256 KiB`:
-
-Because `262,144` is the Windows host negotiation cap for this path. So `256 KiB` is the highest useful value allowed by host negotiation.
+I chose `256 KiB` because `262,144` is the Windows host negotiation cap for this path. Bumping it to `256 KiB` sets it to the highest useful value allowed by the host negotiation logic.
 
 Transport buffer side:
 
@@ -117,36 +95,25 @@ LX_INIT_UTILITY_VM_PLAN9_MSIZE_FD: 65536 -> 262144
 LX_INIT_UTILITY_VM_PLAN9_BUFFER_SIZE: 65536 -> 131072
 ```
 
-Why decoupling was necessary:
+The main flaw here was that `msize` (the protocol payload size) and the socket buffer (handling transport queue memory behavior) were tied together. This forced a tradeoff where you either had to accept low protocol throughput or risk aggressive buffer sizing. I wrote a patch to separate these knobs so they could be tuned independently.
 
-`msize` and socket buffer solve different problems:
+I pushed the buffer from 64 KiB to `128 KiB` to improve chunk streaming and prevent transfers from fragmenting under pressure. I intentionally stopped at 128 KiB instead of maxing it out to 256 KiB, because Linux internally doubles the socket buffer. A 128 KiB buffer naturally aligns with the `trans=fd` protocol-side `msize` target of `256 KiB` (`262,144`).
 
-- `msize`: protocol payload size
-- socket buffer: transport queue memory behavior
-
-Previously they were effectively tied together. That forces a tradeoff: either low protocol throughput or aggressive buffer sizing. The patch separates these knobs so each can be tuned to its own constraint.
-
-Why `128 KiB` buffer:
-
-It was increased from the previous value to improve continuous chunk streaming, so transfers are less likely to break into smaller chunks under pressure. It was intentionally kept at `128 KiB` (not `256 KiB`) so that, with Linux internal socket-buffer doubling, it aligns with the `trans=fd` protocol-side `msize` target of `256 KiB` (`262,144`).
-
-### 3) Host -> guest (`trans=virtio` path)
+### 3. Host to Guest (`trans=virtio` path)
 
 File: `src/linux/init/drvfs.cpp`
 
 - before: `msize=262144`
 - after: `msize=512000`
 
-Why exactly `512000`:
-
-Linux 9P virtio transport (`net/9p/trans_virtio.c`) defines maxsize as:
+This specific number comes straight from the Linux 9P virtio transport (`net/9p/trans_virtio.c`), which defines maxsize as:
 
 - `PAGE_SIZE * (VIRTQUEUE_NUM - 3)`
 
-With `PAGE_SIZE=4096` and `VIRTQUEUE_NUM=128`, that evaluates to `512000` exactly. So this value is transport-derived, not heuristic.
+With `PAGE_SIZE=4096` and `VIRTQUEUE_NUM=128`, that evaluates to `512000` exactly.
 
 > [!TIP]
-> This cap is transport-derived from kernel constraints, so it is safer than picking an arbitrary larger value.
+> Because this cap is derived directly from kernel constraints, it's safer than arbitrarily picking a larger value.
 
 ```collapse-text
 # @title: Virtio maxsize derivation
@@ -154,33 +121,24 @@ PAGE_SIZE * (VIRTQUEUE_NUM - 3)
 4096 * (128 - 3) = 512000
 ```
 
-## Why this improved performance
+## The Results
 
-All changes reduce avoidable packet fragmentation in hot paths.
-
-That leads to:
-
-- fewer protocol messages
-- fewer cross-boundary transitions
-- better sustained throughput
-
-## Benchmark results
+At the end of the day, all these tweaks do is reduce avoidable packet fragmentation in hot paths. Fewer fragments mean fewer protocol messages, which naturally leads to fewer cross-boundary transitions and significantly higher sustained throughput.
 
 | Direction | Before | After | Improvement |
 | --- | --- | --- | --- |
 | WSL -> `C:\` | 124 MB/s | 238 MB/s | +92% |
 | `C:\` -> WSL | 185 MB/s | 365 MB/s | +97% |
 
-- WSL -> `C:\`: `124 MB/s -> 238 MB/s` (`+92%`)
-- `C:\` -> WSL: `185 MB/s -> 365 MB/s` (`+97%`)
+That's a near-2x improvement in both directions.
 
-Near-2x in both directions.
+## The Takeaway
 
-## Lessons learned
+This whole debugging session was a good reminder of how much performance gets bottlenecked simply by conservative defaults. 
 
-This was not a micro-optimization trick. It was limit alignment across layers.
+When I dug into the source code, I realized the fix didn't require pulling apart the architecture or rewriting drivers. It just came down to matching the 9P caps to what the underlying transport could actually handle. 
 
-When protocol limits, transport limits, and host-side constraints disagree, performance suffers. Once those boundaries are matched correctly, even small code changes can produce large gains.
+Sometimes, resolving a massive bottleneck isn't about complex micro-optimizations. It is just about looking under the hood and bumping a few hardcoded numbers.
 
 ## Change summary (before -> after)
 

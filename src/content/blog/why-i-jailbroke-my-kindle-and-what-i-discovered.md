@@ -908,6 +908,4 @@ By the end, I had:
 
 Now, whether I'm diving back into Aristotle and Dante or skimming through a heavy technical PDF, the device finally has a simple, resource-light UI.
 
-More importantly, it feels like *mine*.
-
-Digging into the internals gave me a much deeper appreciation for constrained embedded Linux environments, turning a dusty e-reader into a genuinely fun hacking project.
+More importantly, it finally feels like mine, and that sense of ownership made digging into its internals far more meaningful, giving me a much deeper appreciation for constrained embedded Linux environments and turning a dusty e-reader into a genuinely fun hacking project.

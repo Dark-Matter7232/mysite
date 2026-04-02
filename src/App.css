@@ -568,18 +568,28 @@ h1 {
   background: rgba(7, 18, 32, 0.9);
 }
 
-.code-collapse summary {
+.code-collapse-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
   cursor: pointer;
   user-select: none;
   font-family: var(--mono);
   font-size: 0.8rem;
   color: var(--text-h);
   padding: 0.65rem 0.9rem;
+  background: transparent;
+  border: none;
+  margin: 0;
+  text-align: left;
 }
 
 .code-collapse .code-shell {
   border-top: 1px solid var(--border);
 }
+
+
 
 .blog-prose pre code {
   background: transparent;
@@ -707,7 +717,7 @@ h1 {
 
 .blog-toc ol ul {
   margin: 0.45rem 0 0;
-  padding-left: 1rem;
+  padding-left: 1.35rem;
   display: block;
 }
 
@@ -1301,7 +1311,7 @@ h1 {
   }
 
   .blog-toc ol ul {
-    padding-left: 0.8rem;
+    padding-left: 1.35rem;
   }
 
   .blog-toc .toc-sub button,
@@ -1383,7 +1393,7 @@ h1 {
   }
 }
 
-.toc-details summary {
+.toc-summary {
   cursor: pointer;
   list-style: none; /* Hide default triangle natively */
   display: flex;
@@ -1396,7 +1406,7 @@ h1 {
 }
 
 /* Hide native details marker in Safari */
-.toc-details summary::-webkit-details-marker {
+.toc-summary::-webkit-details-marker {
   display: none;
 }
 
@@ -1437,19 +1447,19 @@ h1 {
   flex-shrink: 0;
 }
 
-.toc-details[open] > summary .toc-toggle svg {
+.toc-details.open > .toc-summary .toc-toggle svg {
   transform: rotate(90deg);
 }
 
 /* Native hover for desktop, plus explicit .active class controlled by React for mobile taps */
 @media (hover: hover) {
-  .toc-details summary .toc-toggle:hover {
+  .toc-summary .toc-toggle:hover {
     background: rgba(156, 169, 193, 0.15);
     color: var(--highlight);
   }
 }
 
-.toc-details summary .toc-toggle.active {
+.toc-summary .toc-toggle.active {
   background: rgba(156, 169, 193, 0.25);
   color: var(--highlight);
 }
@@ -1459,4 +1469,21 @@ h1 {
 .blog-toc > ol > li > a:not(.toc-summary a) {
   flex-grow: 1;
   padding-bottom: 0.3rem; /* Add bot spacing for tap area, avoiding top push */
+}
+
+.animated-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  opacity: 0;
+}
+
+.animated-collapse.open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.animated-collapse-inner {
+  min-height: 0;
 }

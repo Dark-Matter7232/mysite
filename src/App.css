@@ -1173,30 +1173,31 @@ h1 {
 }
 
 .reveal {
-  animation: rise-in 700ms ease both;
+  animation: rise-in 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .section:nth-of-type(2) {
-  animation-delay: 100ms;
+  animation-delay: 80ms;
 }
 
 .section:nth-of-type(3) {
-  animation-delay: 180ms;
+  animation-delay: 150ms;
 }
 
 .section:nth-of-type(4) {
-  animation-delay: 260ms;
+  animation-delay: 220ms;
 }
 
 @keyframes rise-in {
-  from {
+  0% {
     opacity: 0;
-    transform: translateY(18px);
+    transform: translateY(20px) scale(0.98);
+    filter: blur(4px);
   }
-
-  to {
+  100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
+    filter: blur(0);
   }
 }
 

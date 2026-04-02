@@ -20,13 +20,14 @@ async function optimizeImages() {
   const files = await walkDir(DIR_PUBLIC);
   
   const imageFiles = files.filter(file => 
-    /\.(png|jpe?g)$/i.test(file)
+    /\.(png|jpe?g|webp)$/i.test(file)
   );
 
   for (const file of imageFiles) {
     const ext = path.extname(file);
     const avifFile = file.replace(new RegExp(`${ext}$`, 'i'), '.avif');
     const webpFile = file.replace(new RegExp(`${ext}$`, 'i'), '.webp');
+    const isWebpSource = ext.toLowerCase() === '.webp';
     
     // Create AVIF
     try {
@@ -35,11 +36,15 @@ async function optimizeImages() {
         .toFile(avifFile);
       console.log(`✅ Optimized (AVIF): ${path.relative(DIR_PUBLIC, avifFile)}`);
       
-      // Create WebP as fallback
-      await sharp(file)
-        .webp({ quality: 80, effort: 6 })
-        .toFile(webpFile);
-      console.log(`✅ Optimized (WebP): ${path.relative(DIR_PUBLIC, webpFile)}`);
+      // Create WebP as fallback (only if source is not already WebP)
+      if (!isWebpSource) {
+        await sharp(file)
+          .webp({ quality: 80, effort: 6 })
+          .toFile(webpFile);
+        console.log(`✅ Optimized (WebP): ${path.relative(DIR_PUBLIC, webpFile)}`);
+      } else {
+        console.log(`⏭️  Skipped generation (already WebP): ${path.relative(DIR_PUBLIC, file)}`);
+      }
     } catch (err) {
       console.error(`❌ Failed to optimize: ${file}`, err);
     }

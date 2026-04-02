@@ -14,9 +14,24 @@ The page is structured as a living journey log, not a static resume. It captures
 
 ## Tech Stack
 
-- React + TypeScript + Vite
-- Bun as the primary package manager and script runner
-- ESLint for linting
+- **React 19 + TypeScript + Vite 8**
+- **React Router 7**: For declarative client-side routing.
+- **Lucide React**: For scalable SVG icons.
+- **React Markdown + Remark GFM**: Parsing GitHub Flavored Markdown into native React components.
+- **Bun**: For blazing-fast package management, typescript execution, and script running.
+- **ESLint**: For strict linting.
+- **Cloudflare Pages**: Deployment target via Wrangler CLI (`bun run deploy`).
+
+## Architecture & UI Details
+
+Beyond basic rendering, I've prioritized building fluid, native-feeling micro-interactions specifically tuned for desktop and mobile UX:
+
+- **Fluid Motion**: Hand-tuned transition curves (like `cubic-bezier(0.16, 1, 0.3, 1)`) applied universally.
+- **Custom React Collapsibles**: Bypassing the immediate-snap limitations of native HTML `<details>` elements. Components like `CodeBlock` and the Table of Contents `TocGroup` handle `isOpen` state mapped to CSS grids (`grid-template-rows: 0fr -> 1fr`) to achieve buttery smooth height expansions.
+- **Lightweight Event Bus**: Global controls (like "Expand / Collapse All Code") bypass prop-drilling and React Context bloat. Instead, they broadcast lightweight Javascript `CustomEvents` (`toggle-all-code`) caught natively by individual isolated components. 
+- **Page Route Transitions**: Forcing graceful entrance animations by assigning route keys (`<Outlet key={location.pathname} />`) to trigger CSS `.reveal` animations safely on every navigation.
+- **Smart Touch Handling**: A global scroll listener drops active-hover highlights (like chevron arrows) after scrolling >80 pixels to confirm intentional scroll intent and fix iOS Safari sticky-hover artifacts.
+- **CSS Grid Carousel**: Crossfading overlapping image assets smoothly in a single CSS responsive grid block for Markdown image galleries defined under ````carousel`.
 
 ## Bun-First Commands
 
@@ -88,7 +103,16 @@ const answer = 42
 - `// @title: ...` (or `# @title: ...`) is optional.
 - Every code block (collapsed or normal) includes a copy button.
 
-### Callouts, Footnotes, and Figures
+### Carousels, Callouts, Footnotes, and Figures
+
+Interactive carousels (images fade seamlessly):
+````md
+```carousel
+// @title: Optional Title
+/img1.png
+/img2.jpg
+```
+````
 
 Callouts:
 
@@ -165,7 +189,7 @@ It also runs automatically before `bun run build`.
 - Inline code can be clicked to copy.
 - External links auto-open in a new tab and show `[ext]`.
 - Post header shows reading time, word count, and file-based last-updated date.
-- Post footer includes Previous/Next navigation buttons and a Back-to-top button.
+- Post footer includes Previous/Next navigation smoothly animated buttons and a Back-to-top button.
 
 ## SEO and Crawl Files
 
@@ -181,7 +205,7 @@ This repository is kept clean before initialization/publish (no `dist/`, no `nod
 2. Run lint: `bun run lint`
 3. Create production build: `bun run build`
 4. Preview locally if needed: `bun run preview`
-5. Initialize and publish: `git init` and push to your remote
+5. Deploy: `bun run deploy`
 
 ## Project Intent
 

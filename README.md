@@ -129,7 +129,7 @@ Callouts:
 > This is a note.
 ```
 
-Supported labels: `NOTE`, `TIP`, `WARNING`, `INFO`.
+Supported labels: `NOTE`, `TIP`, `WARNING`, `INFO`, `CAUTION`, `DANGER`, `SUCCESS`, `BUG`, `EXAMPLE`.
 
 Footnotes (GFM):
 

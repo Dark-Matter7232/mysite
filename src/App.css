@@ -1485,3 +1485,28 @@ h1 {
 .animated-collapse-inner {
   min-height: 0;
 }
+
+.callout-caution {
+  background: rgba(255, 166, 0, 0.1);
+  border-color: rgba(255, 166, 0, 0.45);
+}
+
+.callout-danger {
+  background: rgba(255, 107, 107, 0.1);
+  border-color: rgba(255, 107, 107, 0.45);
+}
+
+.callout-success {
+  background: rgba(92, 226, 154, 0.08);
+  border-color: rgba(92, 226, 154, 0.35);
+}
+
+.callout-bug {
+  background: rgba(230, 81, 153, 0.08);
+  border-color: rgba(230, 81, 153, 0.35);
+}
+
+.callout-example {
+  background: rgba(181, 154, 255, 0.08);
+  border-color: rgba(181, 154, 255, 0.35);
+}

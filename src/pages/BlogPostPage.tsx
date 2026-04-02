@@ -52,6 +52,83 @@ function groupTocItems(items: TocItem[]): TocGroup[] {
   return groups
 }
 
+function TocGroup({ group, activeChevron, setActiveChevron, scrollToHeading }: any) {
+  const [isOpen, setIsOpen] = useState(false)
+
+  if (group.children.length === 0) {
+    return (
+      <li>
+        <a
+          href={`#${group.heading.id}`}
+          onClick={(e) => {
+            e.preventDefault()
+            scrollToHeading(group.heading.id)
+          }}
+        >
+          {group.heading.text}
+        </a>
+      </li>
+    )
+  }
+
+  return (
+    <li>
+      <div className="toc-details">
+        <div 
+          className="toc-summary"
+          onClick={() => {
+            setActiveChevron({ id: group.heading.id, startY: window.scrollY })
+            setIsOpen(!isOpen)
+          }}
+        >
+          <a
+            href={`#${group.heading.id}`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              scrollToHeading(group.heading.id);
+            }}
+          >
+            {group.heading.text}
+          </a>
+          <span 
+            className={`toc-toggle ${activeChevron?.id === group.heading.id ? 'active' : ''}`}
+            aria-expanded={isOpen}
+          >
+            <ChevronRight 
+              className="toc-icon" 
+              size={16} 
+              style={{ 
+                transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)', 
+                transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)' 
+              }} 
+            />
+          </span>
+        </div>
+        <div className={`animated-collapse ${isOpen ? 'open' : ''}`}>
+          <div className="animated-collapse-inner">
+            <ul>
+              {group.children.map((item: any) => (
+                <li key={item.id} className="toc-sub">
+                  <a
+                    href={`#${item.id}`}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      scrollToHeading(item.id)
+                    }}
+                  >
+                    {item.text}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </li>
+  )
+}
+
 function BlogPostPage() {
   const { slug } = useParams<{ slug: string }>()
   const [searchParams] = useSearchParams()
@@ -106,10 +183,8 @@ function BlogPostPage() {
   }, [post?.slug])
 
   function setAllCodeBlocks(open: boolean) {
-    const blocks = Array.from(document.querySelectorAll<HTMLDetailsElement>('.blog-prose details.code-collapse'))
-    for (const block of blocks) {
-      block.open = open
-    }
+    const event = new CustomEvent('toggle-all-code', { detail: open })
+    window.dispatchEvent(event)
     setCodeState(open ? 'expanded' : 'collapsed')
   }
 
@@ -232,56 +307,13 @@ function BlogPostPage() {
           </div>
           <ol>
             {tocGroups.map((group) => (
-              <li key={group.heading.id}>
-                {group.children.length > 0 ? (
-                  <details className="toc-details">
-                    <summary 
-                      className="toc-summary"
-                      onClick={() => setActiveChevron({ id: group.heading.id, startY: window.scrollY })}
-                    >
-                      <a
-                        href={`#${group.heading.id}`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          // Prevent toggling when intending to navigate
-                          e.stopPropagation();
-                          scrollToHeading(group.heading.id);
-                        }}
-                      >
-                        {group.heading.text}
-                      </a>
-                      <span className={`toc-toggle ${activeChevron?.id === group.heading.id ? 'active' : ''}`}>
-                        <ChevronRight className="toc-icon" size={16} />
-                      </span>
-                    </summary>
-                    <ul>
-                      {group.children.map((item) => (
-                        <li key={item.id} className="toc-sub">
-                          <a
-                            href={`#${item.id}`}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              scrollToHeading(item.id);
-                            }}
-                          >
-                            {item.text}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
-                ) : (
-                  <a
-                    href={`#${group.heading.id}`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      scrollToHeading(group.heading.id);
-                    }}
-                  >
-                    {group.heading.text}
-                  </a>
-                )}
-              </li>
+              <TocGroup 
+                key={group.heading.id} 
+                group={group} 
+                activeChevron={activeChevron} 
+                setActiveChevron={setActiveChevron} 
+                scrollToHeading={scrollToHeading} 
+              />
             ))}
           </ol>
         </aside>

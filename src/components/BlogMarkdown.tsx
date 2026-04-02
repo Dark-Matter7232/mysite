@@ -1,9 +1,10 @@
-import { memo, useMemo, useState } from 'react'
+import { memo, useMemo, useState, useEffect } from 'react'
 import type { ReactElement, ReactNode } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { createSlugger } from '../lib/slug'
 import { normalizeHeadingText } from '../lib/headings'
 import remarkGfm from 'remark-gfm'
+import { ChevronRight } from 'lucide-react'
 
 type BlogMarkdownProps = {
   content: string
@@ -308,6 +309,14 @@ function ImageCarousel({ title, slides }: { title?: string; slides: CarouselSlid
 function CodeBlock({ meta, theme }: { meta: CodeMeta; theme: 'cool' | 'warm' }) {
   const [copied, setCopied] = useState(false)
   const highlighted = useMemo(() => highlightCode(meta.code, meta.language), [meta.code, meta.language])
+  const [isOpen, setIsOpen] = useState(false)
+
+  useEffect(() => {
+    if (!meta.isCollapsible) return
+    const handler = ((e: CustomEvent) => setIsOpen(e.detail)) as EventListener
+    window.addEventListener('toggle-all-code', handler)
+    return () => window.removeEventListener('toggle-all-code', handler)
+  }, [meta.isCollapsible])
 
   async function handleCopy() {
     try {
@@ -341,10 +350,30 @@ function CodeBlock({ meta, theme }: { meta: CodeMeta; theme: 'cool' | 'warm' }) 
   }
 
   return (
-    <details className="code-collapse">
-      <summary>{meta.title ?? `Show ${meta.language || 'code'} block`}</summary>
-      {codeBlock}
-    </details>
+    <div className="code-collapse">
+      <button 
+        type="button"
+        className="code-collapse-summary" 
+        onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+      >
+        <span>{meta.title ?? `Show ${meta.language || 'code'} block`}</span>
+        <ChevronRight 
+          size={16} 
+          style={{ 
+            transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)', 
+            transition: 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+            marginLeft: 'auto',
+            color: 'inherit'
+          }} 
+        />
+      </button>
+      <div className={`animated-collapse ${isOpen ? 'open' : ''}`}>
+        <div className="animated-collapse-inner">
+          {codeBlock}
+        </div>
+      </div>
+    </div>
   )
 }
 

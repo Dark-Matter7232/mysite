@@ -1,0 +1,14 @@
+perf: implement custom SSG and optimize assets/animations
+
+Replaced client-side React rendering with a custom Static Site Generation (SSG)
+pipeline using bun and react-dom/server. Vite now outputs fully prerendered HTML
+files for all routes (/, /blog, /blog/:slug), allowing Cloudflare Pages to serve
+them instantly without JavaScript overhead, drastically improving SEO and load
+times.
+
+In addition, an assets:optimize script was added using sharp to automatically
+convert all public PNG and JPEG images to Next-Gen AVIF and WebP formats. This
+script has been hooked into the prebuild step so that it runs reliably on every
+deployment. Finally, expensive CSS "transition: all" properties were refactored
+to target specific GPU-accelerated properties (transform, opacity, colors) to
+prevent layout trashing and frame drops.

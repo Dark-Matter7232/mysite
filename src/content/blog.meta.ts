@@ -3,8 +3,11 @@ export const blogMeta = {
   "why-i-jailbroke-my-kindle-and-what-i-discovered": {
     "updatedAt": "2026-03-31T21:18:38.009Z"
   },
+  "koreader-orientation-highlight-refresh": {
+    "updatedAt": "2026-04-02T14:12:41.345Z"
+  },
   "wsl-cross-boundary-io": {
-    "updatedAt": "2026-03-31T21:10:53.282Z"
+    "updatedAt": "2026-03-31T21:43:45.306Z"
   },
   "systems-to-fullstack": {
     "updatedAt": "2026-03-31T11:37:59.740Z"

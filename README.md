@@ -1,11 +1,12 @@
-# MySite Portfolio
+# MySite Portfolio & Blog
 
-Personal portfolio for [anuragrai.cv](https://anuragrai.cv), documenting my transition into full stack development from a systems background and systems-first mindset.
+Personal portfolio and technical blog for [anuragrai.cv](https://anuragrai.cv), documenting my transition into full stack development from a systems background and systems-first mindset.
 
-The page is structured as a living journey log, not a static resume. It captures what I am learning, what I am building, and how I approach software through reliability, performance, and clean architecture.
+The page is structured as a living journey log and engineering blog, not just a static resume. It captures what I am learning, what I am building, and how I approach software through reliability, performance, and clean architecture.
 
 ## What This Site Covers
 
+- A fully-featured Markdown blog engine for technical writeups and project postmortems.
 - Current focus areas as I learn React, JavaScript, and TypeScript.
 - A reading shelf with short personal reflections for each book.
 - A 2026 roadmap with practical project goals.

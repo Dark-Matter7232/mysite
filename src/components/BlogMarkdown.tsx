@@ -392,7 +392,7 @@ function MarkdownPre({ children, theme }: { children?: ReactNode; theme: 'cool' 
 }
 
 function getCalloutLabel(text: string): string | null {
-  const match = text.match(/^\s*\[!(NOTE|TIP|WARNING|INFO)\]\s*/i)
+  const match = text.match(/^\s*\[!(NOTE|TIP|WARNING|INFO|CAUTION|DANGER|SUCCESS|BUG|EXAMPLE)\]\s*/i)
   if (!match) {
     return null
   }
@@ -473,7 +473,7 @@ function BlogMarkdown({ content }: BlogMarkdownProps) {
             return <blockquote>{children}</blockquote>
           }
 
-          const cleaned = text.replace(/^\s*\[!(NOTE|TIP|WARNING|INFO)\]\s*/i, '').trim()
+          const cleaned = text.replace(/^\s*\[!(NOTE|TIP|WARNING|INFO|CAUTION|DANGER|SUCCESS|BUG|EXAMPLE)\]\s*/i, '').trim()
           return (
             <aside className={`callout callout-${label.toLowerCase()}`}>
               <p className="callout-label">{label}</p>

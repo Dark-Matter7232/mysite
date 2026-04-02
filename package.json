@@ -6,15 +6,16 @@
   "scripts": {
     "predev": "bun run blog:meta",
     "dev": "bunx --bun vite",
-    "prebuild": "bun run blog:meta && bun run sitemap:generate && bun run rss:generate",
-    "build": "bunx --bun tsc -b && bunx --bun vite build",
+    "prebuild": "bun run blog:meta && bun run sitemap:generate && bun run rss:generate && bun run assets:optimize",
+    "build": "bunx --bun tsc -b && bunx --bun vite build --outDir dist/static && bunx --bun vite build --ssr src/entry-server.tsx --outDir dist/server && bun run scripts/prerender.ts && cp -r dist/static/* dist/ && rm -rf dist/static dist/server",
     "lint": "bunx --bun eslint .",
     "preview": "bunx --bun vite preview",
     "deploy": "bun run build && bunx wrangler pages deploy dist",
     "blog:new": "bun run scripts/new-blog.ts",
     "blog:meta": "bun run scripts/generate-blog-meta.ts",
     "sitemap:generate": "bun run scripts/generate-sitemap.ts",
-    "rss:generate": "bun run scripts/generate-rss.ts"
+    "rss:generate": "bun run scripts/generate-rss.ts",
+    "assets:optimize": "bun run scripts/optimize-assets.ts"
   },
   "dependencies": {
     "lucide-react": "^1.7.0",
@@ -30,6 +31,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.0",
+    "concurrently": "^9.2.1",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",

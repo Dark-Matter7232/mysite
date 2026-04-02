@@ -21,6 +21,7 @@ The page is structured as a living journey log and engineering blog, not just a 
 - **React Markdown + Remark GFM**: Parsing GitHub Flavored Markdown into native React components.
 - **Bun**: For blazing-fast package management, typescript execution, and script running.
 - **ESLint**: For strict linting.
+- **SSG & Asset Optimization**: A custom pre-render script using `react-dom/server` statically generates all HTML at build time, while an automatic `prebuild` hook compresses all assets via `sharp` for maximum Lighthouse scores without Meta-Framework bloat.
 - **Cloudflare Pages**: Deployment target via Wrangler CLI (`bun run deploy`).
 
 ## Features

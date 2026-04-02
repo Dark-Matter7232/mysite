@@ -379,22 +379,20 @@ h1 {
   margin: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.8rem;
+  gap: 0.5rem 0.65rem;
   color: var(--muted);
   font-size: 0.82rem;
   font-family: var(--mono);
 }
 
 .blog-meta > * + * {
-  position: relative;
-  padding-left: 0.75rem;
-  margin-left: -0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
 }
 
 .blog-meta > * + *::before {
   content: '•';
-  position: absolute;
-  left: 0;
   color: var(--muted);
 }
 

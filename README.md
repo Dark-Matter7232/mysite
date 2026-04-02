@@ -22,6 +22,14 @@ The page is structured as a living journey log, not a static resume. It captures
 - **ESLint**: For strict linting.
 - **Cloudflare Pages**: Deployment target via Wrangler CLI (`bun run deploy`).
 
+## Features
+
+- **Blazing Fast**: Handled seamlessly by React 19 + Vite 8 + Bun.
+- **Client-Side Routing**: Smooth, instant page transitions powered by React Router 7.
+- **Markdown Blog Engine**: Full markdown blog pipeline featuring YAML frontmatter parsing, interactive carousels, and responsive typography out-of-the-box.
+- **Built-in SEO & Discovery**: Automatic generation of `rss.xml` and `sitemap.xml`.
+- **System-First Design**: Carefully constructed fluid spring-motion animations mirroring native operating system feel (e.g., iOS).
+
 ## Architecture & UI Details
 
 Beyond basic rendering, I've prioritized building fluid, native-feeling micro-interactions specifically tuned for desktop and mobile UX:

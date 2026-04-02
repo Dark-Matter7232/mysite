@@ -7,8 +7,6 @@ published: false
 publishAt: ""
 ---
 
-# {{TITLE}}
-
 ## Summary
 
 In 3-5 lines, explain the problem, what changed, and the outcome.

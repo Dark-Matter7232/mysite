@@ -1,3 +1,4 @@
+import { ChevronRight } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import BlogMarkdown from '../components/BlogMarkdown'
@@ -64,6 +65,8 @@ function BlogPostPage() {
   const post = slug ? getBlogPostBySlug(slug, allowDraftPreview) : undefined
   const [readingProgress, setReadingProgress] = useState(0)
   const [tocItems, setTocItems] = useState<TocItem[]>([])
+  const [codeState, setCodeState] = useState<'expanded' | 'collapsed' | null>(null)
+  const [activeChevron, setActiveChevron] = useState<{ id: string, startY: number } | null>(null)
 
   const relatedPosts = useMemo(() => (post ? getRelatedBlogPosts(post, 3) : []), [post])
   const prevNext = useMemo(() => (post ? getPrevNextPosts(post.slug) : {}), [post])
@@ -107,7 +110,24 @@ function BlogPostPage() {
     for (const block of blocks) {
       block.open = open
     }
+    setCodeState(open ? 'expanded' : 'collapsed')
   }
+
+  useEffect(() => {
+    if (!activeChevron) return
+
+    function handleScroll() {
+      // Common mobile/web UI guide suggests ~80px distance is enough
+      // to determine a deliberate scroll vs an accidental jitter after tap.
+      if (Math.abs(window.scrollY - activeChevron!.startY) > 80) {
+        setActiveChevron(null)
+      }
+    }
+
+    // Passive listener for smooth scrolling performance
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [activeChevron])
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -195,10 +215,18 @@ function BlogPostPage() {
         <aside className="blog-toc" aria-label="Table of contents">
           <p>Contents</p>
           <div className="toc-actions">
-            <button type="button" onClick={() => setAllCodeBlocks(true)}>
+            <button 
+              type="button" 
+              className={codeState === 'expanded' ? 'active' : ''}
+              onClick={() => setAllCodeBlocks(true)}
+            >
               Expand all code
             </button>
-            <button type="button" onClick={() => setAllCodeBlocks(false)}>
+            <button 
+              type="button" 
+              className={codeState === 'collapsed' ? 'active' : ''}
+              onClick={() => setAllCodeBlocks(false)}
+            >
               Collapse all code
             </button>
           </div>
@@ -207,16 +235,24 @@ function BlogPostPage() {
               <li key={group.heading.id}>
                 {group.children.length > 0 ? (
                   <details className="toc-details">
-                    <summary className="toc-summary">
+                    <summary 
+                      className="toc-summary"
+                      onClick={() => setActiveChevron({ id: group.heading.id, startY: window.scrollY })}
+                    >
                       <a
                         href={`#${group.heading.id}`}
                         onClick={(e) => {
                           e.preventDefault();
+                          // Prevent toggling when intending to navigate
+                          e.stopPropagation();
                           scrollToHeading(group.heading.id);
                         }}
                       >
                         {group.heading.text}
                       </a>
+                      <span className={`toc-toggle ${activeChevron?.id === group.heading.id ? 'active' : ''}`}>
+                        <ChevronRight className="toc-icon" size={16} />
+                      </span>
                     </summary>
                     <ul>
                       {group.children.map((item) => (

@@ -6,19 +6,27 @@
     <description>Technical notes on systems, full stack engineering, and performance work.</description>
     <language>en-us</language>
     <item>
+      <title>Fixing KOReader&apos;s Highlight Lag After Orientation Changes</title>
+      <link>https://anuragrai.cv/blog/koreader-orientation-highlight-refresh</link>
+      <guid>https://anuragrai.cv/blog/koreader-orientation-highlight-refresh</guid>
+      <pubDate>Thu, 02 Apr 2026 00:00:00 GMT</pubDate>
+      <description>A follow-up to my Kindle Linux post: fixing KOReader&apos;s delayed highlight refresh on rotation, and cleaning up a landscape cropping bug in the Kobo-style screensaver plugin.</description>
+    </item>
+
+    <item>
       <title>Why I Jailbroke My Kindle (and What I Discovered)</title>
       <link>https://anuragrai.cv/blog/why-i-jailbroke-my-kindle-and-what-i-discovered</link>
       <guid>https://anuragrai.cv/blog/why-i-jailbroke-my-kindle-and-what-i-discovered</guid>
       <pubDate>Tue, 31 Mar 2026 00:00:00 GMT</pubDate>
-      <description>Write a one-line summary of this post.</description>
+      <description>How I jailbroke my Kindle Basic 10th Gen, escaped the Amazon framework, tuned memory, and hosted a local web server to truly own the device.</description>
     </item>
 
     <item>
-      <title>Fixing Slow WSL File I/O with 9P msize Tuning</title>
+      <title>Why WSL File I/O Feels Slow (and the 9P Fix That Nearly Doubled Throughput)</title>
       <link>https://anuragrai.cv/blog/wsl-cross-boundary-io</link>
       <guid>https://anuragrai.cv/blog/wsl-cross-boundary-io</guid>
       <pubDate>Tue, 31 Mar 2026 00:00:00 GMT</pubDate>
-      <description>A practical deep dive into WSL cross-boundary 9P performance: where throughput was lost, how Linux and WSL limits interact, and why precise cap tuning achieved near-2x gains.</description>
+      <description>A practical breakdown of why WSL cross-boundary file operations feel slow, the 9P bottlenecks behind it, and the tuning changes that produced near-2x throughput gains.</description>
     </item>
 
     <item>

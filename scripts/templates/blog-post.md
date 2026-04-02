@@ -29,6 +29,9 @@ Explain the environment, constraints, and the initial pain point.
 - **Platform:** (e.g., WSL2, Kindle Basic 10th Gen)
 - **The specific friction:** What was broken or slow?
 
+> [!WARNING]
+> Mention any irreversible actions, data loss risks, or strict version requirements here before the reader follows along.
+
 ## What changed (The Fix)
 
 Break down the technical changes or the steps you took to solve the problem. Use subheadings for different steps or components.
@@ -36,6 +39,9 @@ Break down the technical changes or the steps you took to solve the problem. Use
 ### Step 1: Component or concept
 
 Explain the first part of the implementation.
+
+> [!TIP]
+> Share a quick heuristic, an alternative faster methodology, or a small developer experience improvement here.
 
 ```collapse-ts
 // @title: Implementation details
@@ -47,6 +53,9 @@ function fix() {
 ### Step 2: Component or concept
 
 Explain the second part. What were the tradeoffs? Did anything fail first before figuring this out?
+
+> [!INFO]
+> Useful background context, minor side-effects noticed, or links to relevant GitHub issues.
 
 ## Results and observations
 

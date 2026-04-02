@@ -7,80 +7,58 @@ published: false
 publishAt: ""
 ---
 
-## Summary
+[//]: # (Write your hook here. A short, engaging intro paragraph explaining how you ran into this problem or the story behind this post.)
 
-In 3-5 lines, explain the problem, what changed, and the outcome.
+## What this post covers
 
-## Context
+A quick breakdown of what the reader will gain:
+- **Concept 1:** Brief explanation
+- **Concept 2:** Brief explanation
+- **Concept 3:** Brief explanation
 
-State environment and constraints:
-- platform/system:
-- versions/builds:
-- assumptions:
-- what you already tried:
+## Mental model: the core problem
 
-## Goals
+Before jumping into the code, explain the theoretical foundation. What is actually going on under the hood? What assumption is breaking?
 
-Define what success looked like.
+> [!NOTE]
+> A good place to define a key constraint or insight.
 
-## Approach
+## The starting point
 
-Explain your strategy in plain language before deep details.
+Explain the environment, constraints, and the initial pain point.
+- **Platform:** (e.g., WSL2, Kindle Basic 10th Gen)
+- **The specific friction:** What was broken or slow?
 
-## Implementation
+## What changed (The Fix)
 
-Break down the key technical changes:
-- before -> after values
-- hard limits/constraints
-- why exact values were chosen
-- tradeoffs and edge cases
+Break down the technical changes or the steps you took to solve the problem. Use subheadings for different steps or components.
 
-```collapse-bash
-# @title: Optional command snippet
-echo "replace with real command"
-```
+### Step 1: Component or concept
+
+Explain the first part of the implementation.
 
 ```collapse-ts
-// @title: Optional code snippet
-export function example() {
-  return 'replace with real implementation'
+// @title: Implementation details
+function fix() {
+  return "the exact code that solved this"
 }
 ```
 
-## Results
+### Step 2: Component or concept
 
-Quantify impact where possible:
-- metric A: before -> after
-- metric B: before -> after
-- observed behavior changes
+Explain the second part. What were the tradeoffs? Did anything fail first before figuring this out?
 
-## Verification
+## Results and observations
 
-How you validated correctness and safety:
-- tests/benchmarks run
-- logs/signals checked
-- limitations of current validation
+Quantify the impact. What did you observe after the fix?
+- Before: `X`
+- After: `Y`
+- Describe the new feel/behavior of the system.
 
-## Failures and Fixes
+## Practical takeaway
 
-Document dead ends and recoveries so others can avoid them.
-
-## Reproducibility
-
-- prerequisites
-- exact steps
-- expected output/checkpoints
-
-## Optional Safety Notes
-
-Use this section only for risky workflows (firmware, kernel, hardware mods, jailbreaks).
+Summarize the main lesson learned that applies beyond this specific piece of code or hardware.
 
 ## References
 
-- primary documentation/specs
-- commits/PRs/issues
-- external resources
-
-## Change Summary (Keep At Bottom)
-
-- Bullet summary of concrete edits.
+- [Link to documentation or PR](https://example.com)

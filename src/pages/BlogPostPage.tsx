@@ -92,7 +92,7 @@ function TocGroup({ group, activeChevron, setActiveChevron, scrollToHeading }: a
             {group.heading.text}
           </a>
           <span 
-            className={`toc-toggle ${activeChevron?.id === group.heading.id ? 'active' : ''}`}
+            className={`toc-toggle ${activeChevron?.id === group.heading.id || isOpen ? 'active' : ''}`}
             aria-expanded={isOpen}
           >
             <ChevronRight 

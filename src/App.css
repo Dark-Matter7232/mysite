@@ -675,9 +675,19 @@ h1 {
   font-size: 0.74rem;
   cursor: pointer;
   transition: border-color 180ms ease, color 180ms ease, background 180ms ease;
+  /* Prevent ghost touch highlights on iOS so we only rely on .active */
+  -webkit-tap-highlight-color: transparent;
 }
 
-.toc-actions button:hover {
+@media (hover: hover) {
+  .toc-actions button:not(.active):hover {
+    border-color: rgba(255, 122, 89, 0.4);
+    color: var(--text-h);
+  }
+}
+
+.toc-actions button.active,
+.toc-actions button:active {
   border-color: var(--highlight);
   color: var(--text-h);
   background: rgba(255, 122, 89, 0.16);
@@ -951,6 +961,10 @@ h1 {
   min-width: 0;
 }
 
+.post-nav > div:last-child {
+  text-align: right;
+}
+
 .post-nav a {
   display: inline-block;
 }
@@ -1163,7 +1177,7 @@ h1 {
   }
 
   .post-nav {
-    flex-direction: column;
+    flex-direction: row;
   }
 }
 
@@ -1330,63 +1344,78 @@ h1 {
 
 .toc-details summary {
   cursor: pointer;
-  list-style: none; /* Hide default triangle if we want a custom one, or keep it */
+  list-style: none; /* Hide default triangle natively */
   display: flex;
   align-items: flex-start;
-  gap: 0.3rem;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-radius: 12px;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
+/* Hide native details marker in Safari */
 .toc-details summary::-webkit-details-marker {
   display: none;
 }
 
-.toc-details summary::before {
-  content: "▹";
-  color: var(--muted);
-  font-size: 0.8em;
-  display: inline-block;
-  transform: translateY(2px);
-  transition: transform 0.15s ease;
-  width: 12px;
-}
-
-.toc-details[open] > summary::before {
-  transform: translateY(2px) rotate(90deg);
-}
-
-
+/* The Link takes up the remaining space and feels like a block */
 .blog-toc ol > li > a {
-  display: inline-block;
-  margin-left: calc(12px + 0.3rem); /* Match the details toggle width + gap */
-}
-
-.toc-details summary {
-  cursor: pointer;
-  list-style: none; /* Hide default triangle if we want a custom one, or keep it */
   display: inline-flex;
   align-items: flex-start;
-  gap: 0.3rem;
+  vertical-align: top;
+  margin-left: 0;
+  padding: 0;
+  flex-grow: 1;
+  padding-right: 1rem;
 }
 
-.toc-details summary::-webkit-details-marker {
-  display: none;
-}
-
-.toc-details summary::before {
-  content: "▹";
-  color: var(--muted);
-  font-size: 0.8em;
-  display: inline-block;
-  transform: translateY(2px);
-  transition: transform 0.15s ease;
-  width: 12px;
-}
-
-.toc-details[open] > summary::before {
-  transform: translateY(2px) rotate(90deg);
-}
-
+.blog-toc ol > li > a > span, 
 .blog-toc ol > li > a {
-  display: inline-block;
-  margin-left: calc(12px + 0.3rem); /* Match the details toggle width + gap */
+  padding-bottom: 0.15rem;
+}
+
+/* Instead of ::after, we use our dedicated toc-toggle element */
+.toc-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 36px;
+  height: 36px;
+  margin: -6px 0 -4px;
+  border-radius: 999px;
+  color: var(--muted);
+  transition: background 0.2s ease, transform 0.2s ease;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.toc-toggle svg {
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.toc-details[open] > summary .toc-toggle svg {
+  transform: rotate(90deg);
+}
+
+/* Native hover for desktop, plus explicit .active class controlled by React for mobile taps */
+@media (hover: hover) {
+  .toc-details summary .toc-toggle:hover {
+    background: rgba(156, 169, 193, 0.15);
+    color: var(--highlight);
+  }
+}
+
+.toc-details summary .toc-toggle.active {
+  background: rgba(156, 169, 193, 0.25);
+  color: var(--highlight);
+}
+
+/* For direct top-level links without details */
+.blog-toc .toc-summary a,
+.blog-toc > ol > li > a:not(.toc-summary a) {
+  flex-grow: 1;
+  padding-bottom: 0.3rem; /* Add bot spacing for tap area, avoiding top push */
 }

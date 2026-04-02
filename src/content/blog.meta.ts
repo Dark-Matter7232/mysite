@@ -4,7 +4,7 @@ export const blogMeta = {
     "updatedAt": "2026-03-31T21:18:38.009Z"
   },
   "koreader-orientation-highlight-refresh": {
-    "updatedAt": "2026-04-02T14:12:41.345Z"
+    "updatedAt": "2026-04-02T15:15:34.354Z"
   },
   "wsl-cross-boundary-io": {
     "updatedAt": "2026-03-31T21:43:45.306Z"

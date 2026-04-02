@@ -262,7 +262,15 @@ function ImageCarousel({ title, slides }: { title?: string; slides: CarouselSlid
   return (
     <figure className="blog-carousel">
       <div className="blog-carousel-frame">
-        <img src={activeSlide.src} alt={activeSlide.alt} loading="lazy" />
+        {slides.map((slide, index) => (
+          <img
+            key={`${slide.src}-${index}`}
+            src={slide.src}
+            alt={slide.alt}
+            loading={index === 0 ? "eager" : "lazy"}
+            className={index === activeIndex ? 'active' : ''}
+          />
+        ))}
       </div>
       <div className="blog-carousel-controls">
         <div className="blog-carousel-copy">

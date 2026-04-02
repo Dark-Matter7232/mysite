@@ -58,7 +58,9 @@ function SiteLayout() {
         </nav>
       </header>
 
-      <Outlet />
+      <div key={location.pathname} style={{ display: 'contents' }}>
+        <Outlet />
+      </div>
     </main>
   )
 }

@@ -9,7 +9,7 @@ publishAt: ""
 
 I have a tendency to get lost in my tools. Given a highly configurable system, I will inevitably spend more time tweaking, tuning, and maximizing performance than actually building software.
 
-For nearly a decade, Linux was my primary desktop environment. I started with Slax—the only Linux distribution my dad's old ThinkPad could boot, bought from a physical software vendor because cheap internet didn't exist in India yet. From there, I moved to Ubuntu Unity, then Mint, Puppy Linux, Arch, Artix (to be edgy and anti-systemd), Void (because I love runit and hate myself), and eventually Linux From Scratch (LFS). 
+For nearly a decade, Linux was my primary desktop environment. I started with Slax, the only Linux distribution my dad's old ThinkPad could boot, bought from a physical software vendor because cheap internet didn't exist in India yet. From there, I moved to Ubuntu Unity, then Mint, Puppy Linux, Arch, Artix (to be edgy and anti-systemd), Void (because I love runit and hate myself), and eventually Linux From Scratch (LFS). 
 
 Somewhere along the way, the system itself became the project.
 

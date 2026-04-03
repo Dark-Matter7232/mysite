@@ -1,8 +1,8 @@
 import { memo, useMemo, useState, useEffect } from 'react'
 import type { ReactElement, ReactNode } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { createSlugger } from '../lib/slug'
-import { normalizeHeadingText } from '../lib/headings'
+import { createSlugger } from '../../../utils/slug'
+import { normalizeHeadingText } from '../../../utils/headings'
 import remarkGfm from 'remark-gfm'
 import { ChevronRight } from 'lucide-react'
 

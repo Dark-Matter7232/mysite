@@ -1,133 +1,11 @@
-import { ChevronRight } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import BlogMarkdown from '../components/BlogMarkdown'
-import { getBlogPostBySlug, getPrevNextPosts, getRelatedBlogPosts } from '../lib/blog'
-
-type TocItem = {
-  id: string
-  text: string
-  level: 2 | 3
-}
-
-type TocGroup = {
-  heading: TocItem
-  children: TocItem[]
-}
-
-function formatDate(date: string): string {
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
-}
-
-function isSameCalendarDate(a: string, b: string): boolean {
-  const dateA = new Date(a)
-  const dateB = new Date(b)
-
-  return (
-    dateA.getFullYear() === dateB.getFullYear() &&
-    dateA.getMonth() === dateB.getMonth() &&
-    dateA.getDate() === dateB.getDate()
-  )
-}
-
-function groupTocItems(items: TocItem[]): TocGroup[] {
-  const groups: TocGroup[] = []
-
-  for (const item of items) {
-    if (item.level === 2 || groups.length === 0) {
-      groups.push({
-        heading: item,
-        children: [],
-      })
-      continue
-    }
-
-    groups.at(-1)?.children.push(item)
-  }
-
-  return groups
-}
-
-function TocGroup({ group, activeChevron, setActiveChevron, scrollToHeading }: any) {
-  const [isOpen, setIsOpen] = useState(false)
-
-  if (group.children.length === 0) {
-    return (
-      <li>
-        <a
-          href={`#${group.heading.id}`}
-          onClick={(e) => {
-            e.preventDefault()
-            scrollToHeading(group.heading.id)
-          }}
-        >
-          {group.heading.text}
-        </a>
-      </li>
-    )
-  }
-
-  return (
-    <li>
-      <div className="toc-details">
-        <div 
-          className="toc-summary"
-          onClick={() => {
-            setActiveChevron({ id: group.heading.id, startY: window.scrollY })
-            setIsOpen(!isOpen)
-          }}
-        >
-          <a
-            href={`#${group.heading.id}`}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              scrollToHeading(group.heading.id);
-            }}
-          >
-            {group.heading.text}
-          </a>
-          <span 
-            className={`toc-toggle ${activeChevron?.id === group.heading.id || isOpen ? 'active' : ''}`}
-            aria-expanded={isOpen}
-          >
-            <ChevronRight 
-              className="toc-icon" 
-              size={16} 
-              style={{ 
-                transform: isOpen ? 'rotate(90deg)' : 'rotate(0deg)', 
-                transition: 'transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)' 
-              }} 
-            />
-          </span>
-        </div>
-        <div className={`animated-collapse ${isOpen ? 'open' : ''}`}>
-          <div className="animated-collapse-inner">
-            <ul>
-              {group.children.map((item: any) => (
-                <li key={item.id} className="toc-sub">
-                  <a
-                    href={`#${item.id}`}
-                    onClick={(e) => {
-                      e.preventDefault()
-                      scrollToHeading(item.id)
-                    }}
-                  >
-                    {item.text}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
-    </li>
-  )
-}
+import { TocGroup } from '../components/TocGroup'
+import { groupTocItems } from '../utils/toc'
+import type { TocItem } from '../utils/toc'
+import { getBlogPostBySlug, getPrevNextPosts, getRelatedBlogPosts } from '../utils/blog'
+import { formatDate, isSameCalendarDate } from '../../../utils/date'
 
 function BlogPostPage() {
   const { slug } = useParams<{ slug: string }>()
@@ -231,6 +109,15 @@ function BlogPostPage() {
     return () => cancelAnimationFrame(frame)
   }, [post])
 
+  const currentUrl = post ? `https://anuragrai.cv/blog/${post.slug}` : ''
+
+  useEffect(() => {
+    if (!post) return
+    document.title = `${post.title} | Anurag Rai`
+    document.querySelector('meta[name="description"]')?.setAttribute('content', post.excerpt)
+    document.querySelector('link[rel="canonical"]')?.setAttribute('href', currentUrl)
+  }, [post, currentUrl])
+
   if (!post) {
     return (
       <section className="section reveal">
@@ -244,13 +131,7 @@ function BlogPostPage() {
       </section>
     )
   }
-  const currentUrl = `https://anuragrai.cv/blog/${post.slug}`
 
-  useEffect(() => {
-    document.title = `${post.title} | Anurag Rai`
-    document.querySelector('meta[name="description"]')?.setAttribute('content', post.excerpt)
-    document.querySelector('link[rel="canonical"]')?.setAttribute('href', currentUrl)
-  }, [post, currentUrl])
   return (
     <article className="section reveal blog-post-shell readable-section">
       <div

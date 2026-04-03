@@ -7,7 +7,7 @@ export const blogMeta = {
     "updatedAt": "2026-04-02T15:15:34.354Z"
   },
   "why-i-use-wsl": {
-    "updatedAt": "2026-04-03T07:15:58.149Z"
+    "updatedAt": "2026-04-03T09:36:49.375Z"
   },
   "wsl-cross-boundary-io": {
     "updatedAt": "2026-03-31T21:43:45.306Z"

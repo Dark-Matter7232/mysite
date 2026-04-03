@@ -1484,6 +1484,7 @@ h1 {
 
 .animated-collapse-inner {
   min-height: 0;
+  min-width: 0;
 }
 
 .callout-caution {

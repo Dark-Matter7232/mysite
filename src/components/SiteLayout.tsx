@@ -9,15 +9,17 @@ function SiteLayout() {
   const isBlogIndex = location.pathname === '/blog'
   const isBlogPost = location.pathname.startsWith('/blog/')
 
-  function handleHomeClick() {
+  function handleHomeClick(e: React.MouseEvent) {
     if (isBlogPost) {
       sessionStorage.setItem(BLOG_RETURN_PATH_KEY, location.pathname)
     }
 
+    e.preventDefault()
     navigate('/')
   }
 
-  function handleBlogClick() {
+  function handleBlogClick(e: React.MouseEvent) {
+    e.preventDefault()
     if (isBlogPost) {
       sessionStorage.removeItem(BLOG_RETURN_PATH_KEY)
       navigate('/blog')
@@ -41,20 +43,20 @@ function SiteLayout() {
       <header className="section top-nav reveal" aria-label="Primary navigation">
         <p className="eyebrow">anuragrai.cv</p>
         <nav>
-          <button
-            type="button"
+          <a
+            href="/"
             className={isHome ? 'active' : undefined}
             onClick={handleHomeClick}
           >
             Home
-          </button>
-          <button
-            type="button"
+          </a>
+          <a
+            href="/blog"
             className={isBlogIndex || isBlogPost ? 'active' : undefined}
             onClick={handleBlogClick}
           >
             Blog
-          </button>
+          </a>
         </nav>
       </header>
 

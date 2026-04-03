@@ -59,4 +59,5 @@ I need to keep both of these workstations seamlessly in sync.
 
 WSL provides the easiest, most reproducible path to maintaining identical development environments across both x86 and ARM hardware, while operating within the limitations and constraints I've imposed on myself. 
 
-Sometimes, the best tool for the job is the one that sets boundaries for you.
+> [!SUCCESS]
+> For me, WSL isn't the purest Linux experience, but it is the one that keeps me from sabotaging myself.

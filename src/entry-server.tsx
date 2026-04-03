@@ -4,7 +4,7 @@ import { StaticRouter } from 'react-router'
 import { AppRoutes } from './AppRoutes'
 import './index.css'
 
-export { getBlogPostBySlug } from './lib/blog'
+export { getBlogPostBySlug } from './features/blog/utils/blog'
 
 export function render(url: string) {
   return renderToString(

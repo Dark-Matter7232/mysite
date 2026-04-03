@@ -1,16 +1,9 @@
 import { useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { getAllBlogPosts } from '../lib/blog'
+import { getAllBlogPosts } from '../utils/blog'
+import { formatDate } from '../../../utils/date'
 
 const POSTS_PER_PAGE = 4
-
-function formatDate(date: string): string {
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
-}
 
 function BlogIndexPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -97,7 +90,7 @@ function BlogIndexPage() {
                 <li key={post.slug} className="blog-list-item">
                   <article>
                     <p className="blog-meta">
-                      <time dateTime={post.date}>{formatDate(post.date)}</time>
+                      <time dateTime={post.date}>{formatDate(post.date, 'short')}</time>
                       <span>{post.readingTimeMinutes} min read</span>
                     </p>
                     <h2>

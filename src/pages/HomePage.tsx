@@ -1,3 +1,5 @@
+import { useEffect } from 'react'
+
 const readingList = [
   {
     title: 'The Last Girl',
@@ -60,6 +62,13 @@ const toolkit = [
 ]
 
 function HomePage() {
+  useEffect(() => {
+    document.title = 'Anurag Rai | Portfolio'
+    const desc = "Anurag Rai's portfolio documenting his transition from systems work to full stack development with projects, roadmap, reading notes, and technical focus areas."
+    document.querySelector('meta[name="description"]')?.setAttribute('content', desc)
+    document.querySelector('link[rel="canonical"]')?.setAttribute('href', 'https://anuragrai.cv/')
+  }, [])
+
   return (
     <>
       <header className="hero section reveal">

@@ -1,8 +1,8 @@
-import SiteLayout from './components/SiteLayout'
+import SiteLayout from './components/layout/SiteLayout'
 import './App.css'
-import BlogIndexPage from './pages/BlogIndexPage'
-import BlogPostPage from './pages/BlogPostPage'
-import HomePage from './pages/HomePage'
+import BlogIndexPage from './features/blog/pages/BlogIndexPage'
+import BlogPostPage from './features/blog/pages/BlogPostPage'
+import HomePage from './features/home/pages/HomePage'
 import { Navigate, Route, Routes } from 'react-router-dom'
 
 export function AppRoutes() {

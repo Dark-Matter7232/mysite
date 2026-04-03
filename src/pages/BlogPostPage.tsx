@@ -244,7 +244,13 @@ function BlogPostPage() {
       </section>
     )
   }
+  const currentUrl = `https://anuragrai.cv/blog/${post.slug}`
 
+  useEffect(() => {
+    document.title = `${post.title} | Anurag Rai`
+    document.querySelector('meta[name="description"]')?.setAttribute('content', post.excerpt)
+    document.querySelector('link[rel="canonical"]')?.setAttribute('href', currentUrl)
+  }, [post, currentUrl])
   return (
     <article className="section reveal blog-post-shell readable-section">
       <div

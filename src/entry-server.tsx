@@ -4,6 +4,8 @@ import { StaticRouter } from 'react-router'
 import { AppRoutes } from './AppRoutes'
 import './index.css'
 
+export { getBlogPostBySlug } from './lib/blog'
+
 export function render(url: string) {
   return renderToString(
     <StrictMode>

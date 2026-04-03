@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { getAllBlogPosts } from '../lib/blog'
 
@@ -28,6 +29,13 @@ function BlogIndexPage() {
   const safePage = Math.min(currentPage, totalPages)
   const startIndex = (safePage - 1) * POSTS_PER_PAGE
   const visiblePosts = filteredPosts.slice(startIndex, startIndex + POSTS_PER_PAGE)
+
+  useEffect(() => {
+    document.title = 'Blog | Anurag Rai'
+    const desc = "Long-form notes on projects, systems thinking, and lessons from building in public."
+    document.querySelector('meta[name="description"]')?.setAttribute('content', desc)
+    document.querySelector('link[rel="canonical"]')?.setAttribute('href', 'https://anuragrai.cv/blog')
+  }, [])
 
   function updateParams(next: { tag?: string; page?: number }) {
     const nextTag = next.tag ?? selectedTag

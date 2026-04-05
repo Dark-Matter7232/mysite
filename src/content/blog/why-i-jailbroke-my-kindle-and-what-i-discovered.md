@@ -566,6 +566,13 @@ Now it follows:
 
 No race conditions, no timing hacks.
 
+> [!UPDATE]
+> Problem: interactive kept CPU at ~35–40% idle (`cfinteractive`). \
+> Cause: aggressive defaults (`20ms` sampling, no damping, late boost) → unstable loop. \
+> Fix: slower sampling + damping + earlier boost. \
+> Result: ~1.7–3% idle CPU, significantly better responsiveness.
+
+
 ### Memory and swap
 
 Memory is where things get tricky on this device.
@@ -594,7 +601,7 @@ You’re trading memory pressure for CPU usage (compression), and CPU is already
 So I didn’t want the system constantly swapping unless it actually needed to.
 
 ```bash
-echo 60 > /proc/sys/vm/swappiness
+echo 65 > /proc/sys/vm/swappiness
 ```
 
 The idea was:
@@ -704,9 +711,38 @@ script
         # ---------------------------
         echo interactive > "$CPU_PATH/scaling_governor"
 
-        # safety reapply
+        # safety reapply (perfd can race)
         sleep 5
         echo interactive > "$CPU_PATH/scaling_governor" 2>/dev/null || true
+
+        # ---------------------------
+        # Interactive governor tuning
+        # Fix: default interactive causes kernel feedback loop (~50Hz wakeups)
+        # Tuned: lower wake frequency + damping + earlier boost
+        # Result: ~3–7% idle CPU with better responsiveness
+        # ---------------------------
+
+        INT_PATH="/sys/devices/system/cpu/cpufreq/interactive"
+
+        if [ -d "$INT_PATH" ]; then
+            # Reduce wakeups (20ms → 40ms)
+            echo 40000 > "$INT_PATH/timer_rate"
+
+            # Prevent rapid oscillation
+            echo 150000 > "$INT_PATH/min_sample_time"
+
+            # Add slight delay before jumping to high freq (damping)
+            echo 30000 > "$INT_PATH/above_hispeed_delay"
+
+            # Boost earlier (99 → 55)
+            echo 55 > "$INT_PATH/go_hispeed_load"
+
+            # Maintain lower target load (more responsive scaling)
+            echo 70 > "$INT_PATH/target_loads"
+
+            # Ensure fast ramp to max freq
+            echo 996000 > "$INT_PATH/hispeed_freq"
+        fi
 
         # ---------------------------
         # Drop caches after full settle
@@ -891,7 +927,10 @@ It hosts a local web server on the Kindle and exposes the file system over Wi-Fi
 /blog/filesync-qr.webp | FileSync QR code
 /blog/filesync-web.webp | FileSync web server accessible on port 8080
 ```
-
+> [!NOTE]
+> If WiFi crashes or behaves inconsistently, check the system timezone.  \
+> An incorrect timezone can break network services on Kindle.  \
+> Fix it via `settz` or by correcting the `/var/local` timezone symlink.
 
 ## Conclusion
 

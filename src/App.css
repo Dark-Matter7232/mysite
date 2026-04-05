@@ -766,8 +766,16 @@ h1 {
   text-transform: uppercase;
 }
 
-.callout p {
+.callout > :last-child {
   margin: 0;
+}
+
+.callout > * + * {
+  margin-top: 0.55rem;
+}
+
+.callout .callout-label + * {
+  margin-top: 0;
 }
 
 .callout-note {
@@ -1510,4 +1518,9 @@ h1 {
 .callout-example {
   background: rgba(181, 154, 255, 0.08);
   border-color: rgba(181, 154, 255, 0.35);
+}
+
+.callout-update {
+    background: rgba(140, 120, 255, 0.08);
+    border-color: rgba(140, 120, 255, 0.4);
 }

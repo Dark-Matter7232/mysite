@@ -1,4 +1,4 @@
-import { memo, useMemo, useState, useEffect } from 'react'
+import { Children, cloneElement, isValidElement, memo, useMemo, useState, useEffect } from 'react'
 import type { ReactElement, ReactNode } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { createSlugger } from '../../../utils/slug'
@@ -392,12 +392,69 @@ function MarkdownPre({ children, theme }: { children?: ReactNode; theme: 'cool' 
 }
 
 function getCalloutLabel(text: string): string | null {
-  const match = text.match(/^\s*\[!(NOTE|TIP|WARNING|INFO|CAUTION|DANGER|SUCCESS|BUG|EXAMPLE)\]\s*/i)
+  const match = text.match(/^\s*\[!(NOTE|TIP|WARNING|INFO|CAUTION|DANGER|SUCCESS|BUG|EXAMPLE|UPDATE)\]\s*/i)
   if (!match) {
     return null
   }
 
   return match[1].toUpperCase()
+}
+
+const CALLOUT_MARKER_PATTERN = /^\s*\[!(NOTE|TIP|WARNING|INFO|CAUTION|DANGER|SUCCESS|BUG|EXAMPLE|UPDATE)\]\s*/i
+
+function stripCalloutMarkerFromNode(node: ReactNode): { node: ReactNode; stripped: boolean } {
+  if (typeof node === 'string' || typeof node === 'number') {
+    const text = String(node)
+    const nextText = text.replace(CALLOUT_MARKER_PATTERN, '')
+    const stripped = nextText !== text
+    return { node: nextText.length > 0 ? nextText : null, stripped }
+  }
+
+  if (Array.isArray(node)) {
+    let stripped = false
+    const nextNodes = node.flatMap((child) => {
+      if (stripped) {
+        return [child]
+      }
+
+      const result = stripCalloutMarkerFromNode(child)
+      stripped = result.stripped
+      return result.node == null ? [] : [result.node]
+    })
+
+    return { node: nextNodes, stripped }
+  }
+
+  if (isValidElement<{ children?: ReactNode }>(node)) {
+    const result = stripCalloutMarkerFromNode(node.props.children)
+    if (!result.stripped) {
+      return { node, stripped: false }
+    }
+
+    const nextChildren = Array.isArray(result.node) ? result.node : result.node
+    if (node.type === 'p' && Children.count(nextChildren) === 0) {
+      return { node: null, stripped: true }
+    }
+
+    return { node: cloneElement(node, undefined, nextChildren), stripped: true }
+  }
+
+  return { node, stripped: false }
+}
+
+function stripCalloutMarker(children: ReactNode): ReactNode {
+  const childNodes = Children.toArray(children)
+  let stripped = false
+
+  return childNodes.flatMap((child) => {
+    if (stripped) {
+      return [child]
+    }
+
+    const result = stripCalloutMarkerFromNode(child)
+    stripped = result.stripped
+    return result.node == null ? [] : [result.node]
+  })
 }
 
 function buildFigureNumberMap(markdown: string): FigureNumberMap {
@@ -473,11 +530,11 @@ function BlogMarkdown({ content }: BlogMarkdownProps) {
             return <blockquote>{children}</blockquote>
           }
 
-          const cleaned = text.replace(/^\s*\[!(NOTE|TIP|WARNING|INFO|CAUTION|DANGER|SUCCESS|BUG|EXAMPLE)\]\s*/i, '').trim()
+          const cleanedChildren = stripCalloutMarker(children)
           return (
             <aside className={`callout callout-${label.toLowerCase()}`}>
               <p className="callout-label">{label}</p>
-              <p>{cleaned}</p>
+              {cleanedChildren}
             </aside>
           )
         },

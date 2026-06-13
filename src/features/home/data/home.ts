@@ -32,10 +32,10 @@ export const readingList = [
 ]
 
 export const focusAreas = [
-  'Learning React fundamentals through small projects',
-  'Strengthening JavaScript and TypeScript basics',
-  'Getting started with real-world web development',
-  'Applying systems thinking to clean web architecture',
+  'Working through the PortSwigger Web Security Academy from the very beginning',
+  'Learning HTTP, the browser security model, and how web requests really flow',
+  'Getting fluent with Burp Suite as my daily tool',
+  'Writing down what I learn, including the things I get wrong',
 ]
 
 export const interests = [

@@ -21,12 +21,12 @@ The page is structured as a living journey log and engineering blog, not just a 
 - **React Markdown + Remark GFM**: Parsing GitHub Flavored Markdown into native React components.
 - **Bun**: For blazing-fast package management, typescript execution, and script running.
 - **ESLint**: For strict linting.
-- **SSG & Asset Optimization**: A custom pre-render script using `react-dom/server` statically generates all HTML at build time, while an automatic `prebuild` hook compresses all assets via `sharp` for maximum Lighthouse scores without Meta-Framework bloat.
+- **SSG & Asset Optimization**: A custom pre-render script using `react-dom/server` statically generates the home page, blog index, and published posts. The asset pipeline uses Bun's native image encoder where available, with Sharp as the AVIF fallback.
 - **Cloudflare Pages**: Deployment target via Wrangler CLI (`bun run deploy`).
 
 ## Features
 
-- **Blazing Fast**: Handled seamlessly by React 19 + Vite 8 + Bun.
+- **Performance-aware rendering**: Desktop keeps the original gradient and panel blur, while mobile and low-power devices use a pre-rendered ambient background to avoid repeatedly rasterizing the full-page blur.
 - **Client-Side Routing**: Smooth, instant page transitions powered by React Router 7.
 - **Markdown Blog Engine**: Full markdown blog pipeline featuring YAML frontmatter parsing, interactive carousels, and responsive typography out-of-the-box.
 - **Built-in SEO & Discovery**: Automatic generation of `rss.xml` and `sitemap.xml`.
@@ -36,11 +36,12 @@ The page is structured as a living journey log and engineering blog, not just a 
 
 Beyond basic rendering, I've prioritized building fluid, native-feeling micro-interactions specifically tuned for desktop and mobile UX:
 
-- **Fluid Motion**: Hand-tuned transition curves (like `cubic-bezier(0.16, 1, 0.3, 1)`) applied universally.
+- **Fluid Motion**: Hand-tuned transition curves (like `cubic-bezier(0.16, 1, 0.3, 1)`) are used for collapsibles, carousels, and route entrance animations.
 - **Custom React Collapsibles**: Bypassing the immediate-snap limitations of native HTML `<details>` elements. Components like `CodeBlock` and the Table of Contents `TocGroup` handle `isOpen` state mapped to CSS grids (`grid-template-rows: 0fr -> 1fr`) to achieve buttery smooth height expansions.
 - **Lightweight Event Bus**: Global controls (like "Expand / Collapse All Code") bypass prop-drilling and React Context bloat. Instead, they broadcast lightweight Javascript `CustomEvents` (`toggle-all-code`) caught natively by individual isolated components. 
-- **Page Route Transitions**: Forcing graceful entrance animations by assigning route keys (`<Outlet key={location.pathname} />`) to trigger CSS `.reveal` animations safely on every navigation.
-- **Smart Touch Handling**: A global scroll listener drops active-hover highlights (like chevron arrows) after scrolling >80 pixels to confirm intentional scroll intent and fix iOS Safari sticky-hover artifacts.
+- **Page Route Transitions**: Route changes key the outlet (`<Outlet key={location.pathname} />`) so CSS `.reveal` animations run when navigating between pages. Navigation also resets the viewport to the top.
+- **Mobile navigation state**: Home and Blog are route-driven links. When leaving an opened blog post for Home, the next Blog tap returns to that post; a subsequent Blog tap opens the blog index. Desktop hover styles are disabled on touch-only devices to avoid sticky iOS highlights.
+- **TOC touch feedback**: A tapped TOC chevron gets temporary feedback and clears after scrolling more than 80 pixels. An expanded group remains highlighted while it is open.
 - **CSS Grid Carousel**: Crossfading overlapping image assets smoothly in a single CSS responsive grid block for Markdown image galleries defined under ````carousel`.
 
 ## Bun-First Commands
@@ -73,6 +74,19 @@ Run lint checks:
 
 ```bash
 bun run lint
+```
+
+Regenerate optimized image assets:
+
+```bash
+bun run assets:optimize
+```
+
+Generate discovery files directly:
+
+```bash
+bun run sitemap:generate
+bun run rss:generate
 ```
 
 ## Markdown Blog Workflow
@@ -196,10 +210,10 @@ It also runs automatically before `bun run build`.
 
 ### Additional Post UX
 
-- Inline code can be clicked to copy.
+- Code blocks include a copy button when the browser exposes the Clipboard API.
 - External links auto-open in a new tab and show `[ext]`.
 - Post header shows reading time, word count, and file-based last-updated date.
-- Post footer includes Previous/Next navigation smoothly animated buttons and a Back-to-top button.
+- Post footer includes Previous/Next navigation buttons.
 
 ## SEO and Crawl Files
 

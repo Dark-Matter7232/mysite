@@ -38,59 +38,7 @@ export type HomeDocument = {
   links?: HomeLink[]
 }
 
-type Frontmatter = Record<string, string | string[]>
-
-function parseFrontmatterValue(value: string): string | string[] {
-  const trimmed = value.trim()
-
-  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
-    const parsed = JSON.parse(trimmed) as unknown
-    if (!Array.isArray(parsed) || !parsed.every((item) => typeof item === 'string')) {
-      throw new Error(`Expected a string array, received: ${trimmed}`)
-    }
-
-    return parsed
-  }
-
-  return trimmed.replace(/^['"]|['"]$/g, '')
-}
-
-function splitDocument(raw: string): { frontmatter: Frontmatter; body: string } {
-  const normalized = raw.replace(/\r\n/g, '\n').trim()
-
-  if (!normalized.startsWith('---\n')) {
-    return { frontmatter: {}, body: normalized }
-  }
-
-  const delimiter = '\n---\n'
-  const end = normalized.indexOf(delimiter, 4)
-  if (end === -1) {
-    throw new Error('Home content frontmatter is missing its closing delimiter')
-  }
-
-  const frontmatter: Frontmatter = {}
-  for (const line of normalized.slice(4, end).split('\n')) {
-    const separator = line.indexOf(':')
-    if (separator === -1) {
-      throw new Error(`Invalid home content frontmatter line: ${line}`)
-    }
-
-    const key = line.slice(0, separator).trim()
-    const value = line.slice(separator + 1).trim()
-    if (!key || !value) {
-      throw new Error(`Invalid home content frontmatter line: ${line}`)
-    }
-
-    frontmatter[key] = parseFrontmatterValue(value)
-  }
-
-  return {
-    frontmatter,
-    body: normalized.slice(end + delimiter.length).trim(),
-  }
-}
-
-function requiredString(frontmatter: Frontmatter, key: string, source: string): string {
+function requiredString(frontmatter: FrontmatterData, key: string, source: string): string {
   const value = frontmatter[key]
   if (typeof value !== 'string' || !value) {
     throw new Error(`${source} requires a non-empty '${key}' field`)
@@ -142,7 +90,7 @@ function parseLinks(body: string, source: string): HomeLink[] {
 }
 
 export function parseHomeDocument(raw: string, source = 'home content'): HomeDocument {
-  const { frontmatter, body } = splitDocument(raw)
+  const { data: frontmatter, content: body } = parseFrontmatterDocument(raw)
   const type = requiredString(frontmatter, 'type', source) as HomeSectionType
   const validTypes: HomeSectionType[] = [
     'hero',
@@ -195,3 +143,7 @@ export function parseHomeDocument(raw: string, source = 'home content'): HomeDoc
 
   return document
 }
+import {
+  parseFrontmatterDocument,
+  type FrontmatterData,
+} from '../../../utils/frontmatter'

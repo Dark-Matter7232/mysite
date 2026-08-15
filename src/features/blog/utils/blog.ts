@@ -203,6 +203,7 @@ function isPostVisible(post: BlogPost): boolean {
 }
 
 const blogPosts: BlogPost[] = Object.entries(markdownModules)
+  .filter(([path]) => !path.endsWith('/blog/index.md'))
   .map(([path, rawMarkdown]) => {
     const slug = getSlugFromPath(path)
     const { frontmatter, content } = splitFrontmatter(rawMarkdown)

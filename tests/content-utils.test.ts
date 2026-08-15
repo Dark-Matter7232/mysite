@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test'
 import { getTableOfContents, normalizeHeadingText } from '../src/utils/headings'
 import { createSlugger } from '../src/utils/slug'
 import { parseHomeDocument } from '../src/features/home/data/home-content'
+import { parseFrontmatterDocument } from '../src/utils/frontmatter'
 
 describe('content utilities', () => {
   test('normalizes heading formatting before creating anchor text', () => {
@@ -47,5 +48,16 @@ description: Current setup
       { label: 'Editors', value: 'VS Code' },
       { label: 'Shells', value: 'zsh' },
     ])
+  })
+
+  test('parses shared frontmatter strings and string arrays', () => {
+    expect(parseFrontmatterDocument(`---
+title: Blog
+tags: ["one", "two"]
+---
+Body`).data).toEqual({
+      title: 'Blog',
+      tags: ['one', 'two'],
+    })
   })
 })

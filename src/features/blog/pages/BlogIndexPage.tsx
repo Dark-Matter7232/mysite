@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { getAllBlogPosts } from '../utils/blog'
 import { formatDate } from '../../../utils/date'
+import { blogIndexContent } from '../data/blog-index'
 
 const POSTS_PER_PAGE = 4
 
@@ -24,8 +25,8 @@ function BlogIndexPage() {
   const visiblePosts = filteredPosts.slice(startIndex, startIndex + POSTS_PER_PAGE)
 
   useEffect(() => {
-    document.title = 'Blog | Anurag Rai'
-    const desc = "Long-form notes on projects, systems thinking, and lessons from building in public."
+    document.title = `${blogIndexContent.title} | Anurag Rai`
+    const desc = blogIndexContent.description
     document.querySelector('meta[name="description"]')?.setAttribute('content', desc)
     document.querySelector('link[rel="canonical"]')?.setAttribute('href', 'https://anuragrai.cv/blog')
   }, [])
@@ -48,19 +49,16 @@ function BlogIndexPage() {
   return (
     <section className="section reveal">
       <div className="section-head">
-        <h1>Blog</h1>
-        <p>
-          Long-form notes on projects, systems thinking, and lessons from building in
-          public. Posts are sourced from Markdown files in this repository.
-        </p>
+        <h1>{blogIndexContent.title}</h1>
+        <p>{blogIndexContent.description} {blogIndexContent.sourceNote}</p>
       </div>
 
       {posts.length === 0 ? (
-        <p className="empty-state">No posts yet. Add a Markdown file in `src/content/blog`.</p>
+        <p className="empty-state">{blogIndexContent.emptyPostsLabel}</p>
       ) : (
         <>
-          <div className="blog-controls" aria-label="Blog filters">
-            <p>Filter by tag:</p>
+          <div className="blog-controls" aria-label={blogIndexContent.controlsAriaLabel}>
+            <p>{blogIndexContent.filterLabel}</p>
             <div className="filter-chip-row">
               <button
                 type="button"
@@ -83,9 +81,9 @@ function BlogIndexPage() {
           </div>
 
           {visiblePosts.length === 0 ? (
-            <p className="empty-state">No posts for this tag yet.</p>
+            <p className="empty-state">{blogIndexContent.emptyFilterLabel}</p>
           ) : (
-            <ul className="blog-list" aria-label="Blog posts">
+            <ul className="blog-list" aria-label={blogIndexContent.postsAriaLabel}>
               {visiblePosts.map((post) => (
                 <li key={post.slug} className="blog-list-item">
                   <article>
@@ -117,23 +115,23 @@ function BlogIndexPage() {
             </ul>
           )}
 
-          <div className="pagination-row" aria-label="Pagination">
+          <div className="pagination-row" aria-label={blogIndexContent.paginationAriaLabel}>
             <button
               type="button"
               onClick={() => updateParams({ page: safePage - 1 })}
               disabled={safePage <= 1}
             >
-              Previous
+              {blogIndexContent.previousLabel}
             </button>
             <p>
-              Page {safePage} of {totalPages}
+              {blogIndexContent.pageLabel} {safePage} of {totalPages}
             </p>
             <button
               type="button"
               onClick={() => updateParams({ page: safePage + 1 })}
               disabled={safePage >= totalPages}
             >
-              Next
+              {blogIndexContent.nextLabel}
             </button>
           </div>
         </>

@@ -138,6 +138,11 @@ validates the required files and fields, so content mistakes are reported before
 deployment. TSX defines the visual layout and interaction behavior; Markdown owns
 the words and lists displayed inside it.
 
+The blog landing page is configured by `src/content/blog/index.md`. Its frontmatter
+controls the page title, description, source note, tag-filter label, empty states,
+pagination labels, and accessibility labels. Individual posts remain separate Markdown
+files in `src/content/blog/`; `index.md` is reserved for the landing-page configuration.
+
 ### Collapsible Code Blocks
 
 Use a code fence language prefixed with `collapse-`:

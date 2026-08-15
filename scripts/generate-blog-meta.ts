@@ -9,7 +9,7 @@ async function main() {
   const meta: Record<string, { updatedAt: string }> = {}
 
   for (const entry of entries) {
-    if (!entry.isFile() || !entry.name.endsWith('.md')) {
+    if (!entry.isFile() || !entry.name.endsWith('.md') || entry.name === 'index.md') {
       continue
     }
 

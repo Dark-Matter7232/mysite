@@ -269,6 +269,7 @@ function ImageCarousel({ title, slides }: { title?: string; slides: CarouselSlid
             src={slide.src}
             alt={slide.alt}
             loading={index === 0 ? "eager" : "lazy"}
+            decoding="async"
             className={index === activeIndex ? 'active' : ''}
           />
         ))}
@@ -550,12 +551,12 @@ function BlogMarkdown({ content }: BlogMarkdownProps) {
           const number = caption ? figureNumbers.get(key) : undefined
 
           if (!caption) {
-            return <img src={resolvedSrc} alt={alt ?? ''} loading="lazy" />
+            return <img src={resolvedSrc} alt={alt ?? ''} loading="lazy" decoding="async" />
           }
 
           return (
             <figure>
-              <img src={resolvedSrc} alt={alt ?? ''} loading="lazy" />
+              <img src={resolvedSrc} alt={alt ?? ''} loading="lazy" decoding="async" />
               <figcaption>
                 Figure {number ?? '?'}: {caption}
               </figcaption>

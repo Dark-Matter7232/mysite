@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import BlogMarkdown from '../components/BlogMarkdown'
 import { TocGroup } from '../components/TocGroup'
@@ -18,7 +18,8 @@ function BlogPostPage() {
       window.location.hostname === '::1')
   const allowDraftPreview = wantsPreview && isLocalHost
   const post = slug ? getBlogPostBySlug(slug, allowDraftPreview) : undefined
-  const [readingProgress, setReadingProgress] = useState(0)
+  const progressBarRef = useRef<HTMLDivElement>(null)
+  const progressFillRef = useRef<HTMLSpanElement>(null)
   const [tocItems, setTocItems] = useState<TocItem[]>([])
   const [codeState, setCodeState] = useState<'expanded' | 'collapsed' | null>(null)
   const [activeChevron, setActiveChevron] = useState<{ id: string, startY: number } | null>(null)
@@ -42,21 +43,27 @@ function BlogPostPage() {
     function updateProgress() {
       const scrollTop = window.scrollY
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight
-      if (maxScroll <= 0) {
-        setReadingProgress(0)
-        return
-      }
-
-      const next = Math.min(100, Math.max(0, (scrollTop / maxScroll) * 100))
-      setReadingProgress(next)
+      const next = maxScroll <= 0 ? 0 : Math.min(100, Math.max(0, (scrollTop / maxScroll) * 100))
+      progressFillRef.current?.style.setProperty('transform', `scaleX(${next / 100})`)
+      progressBarRef.current?.setAttribute('aria-valuenow', String(Math.round(next)))
     }
 
     updateProgress()
-    window.addEventListener('scroll', updateProgress, { passive: true })
-    window.addEventListener('resize', updateProgress)
+    let frame = 0
+    function scheduleProgressUpdate() {
+      if (frame) return
+      frame = requestAnimationFrame(() => {
+        frame = 0
+        updateProgress()
+      })
+    }
+
+    window.addEventListener('scroll', scheduleProgressUpdate, { passive: true })
+    window.addEventListener('resize', scheduleProgressUpdate)
     return () => {
-      window.removeEventListener('scroll', updateProgress)
-      window.removeEventListener('resize', updateProgress)
+      window.removeEventListener('scroll', scheduleProgressUpdate)
+      window.removeEventListener('resize', scheduleProgressUpdate)
+      cancelAnimationFrame(frame)
     }
   }, [post?.slug])
 
@@ -135,14 +142,15 @@ function BlogPostPage() {
   return (
     <article className="section reveal blog-post-shell readable-section">
       <div
+        ref={progressBarRef}
         className="reading-progress"
         role="progressbar"
         aria-label="Reading progress"
         aria-valuemin={0}
         aria-valuemax={100}
-        aria-valuenow={Math.round(readingProgress)}
+        aria-valuenow={0}
       >
-        <span style={{ width: `${readingProgress}%` }} />
+        <span ref={progressFillRef} />
       </div>
 
       <p className="blog-back-link">

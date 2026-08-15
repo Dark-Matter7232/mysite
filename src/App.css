@@ -275,6 +275,14 @@ h1 {
   grid-column: 1 / -1;
 }
 
+@media (min-width: 861px) {
+  .list-panel li:last-child:nth-child(odd),
+  .toolkit-list li:last-child:nth-child(odd) {
+    align-items: center;
+    text-align: center;
+  }
+}
+
 .toolkit-list strong {
   color: var(--muted);
   font-family: var(--mono);

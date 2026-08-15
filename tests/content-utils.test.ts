@@ -60,4 +60,10 @@ Body`).data).toEqual({
       tags: ['one', 'two'],
     })
   })
+
+  test('accepts frontmatter-only documents', () => {
+    expect(parseFrontmatterDocument(`---
+title: Blog
+---`).content).toBe('')
+  })
 })

@@ -26,12 +26,12 @@ export function parseFrontmatterDocument(raw: string): {
     return { data: {}, content: normalized }
   }
 
-  const delimiter = '\n---\n'
-  const end = normalized.indexOf(delimiter, 4)
-  if (end === -1) {
+  const closingDelimiter = normalized.match(/\n---(?:\n|$)/)
+  if (!closingDelimiter || closingDelimiter.index === undefined) {
     throw new Error('Frontmatter is missing its closing delimiter')
   }
 
+  const end = closingDelimiter.index
   const data: FrontmatterData = {}
   for (const line of normalized.slice(4, end).split('\n')) {
     const separator = line.indexOf(':')
@@ -50,6 +50,6 @@ export function parseFrontmatterDocument(raw: string): {
 
   return {
     data,
-    content: normalized.slice(end + delimiter.length).trim(),
+    content: normalized.slice(end + closingDelimiter[0].length).trim(),
   }
 }

@@ -118,6 +118,26 @@ published: true
 
 Then add your post body in Markdown below the frontmatter. New files are auto-discovered at build time via Vite's `import.meta.glob`.
 
+## Markdown Home Content
+
+Home page content is stored in `src/content/home/`. Existing home sections can be
+rewritten without editing TSX:
+
+| File | Content |
+| --- | --- |
+| `hero.md` | Eyebrow, title, lede, SEO metadata, and badges |
+| `focus.md` | Current-focus cards |
+| `reading.md` | Reading shelf entries in `title | author | summary` format |
+| `interests.md` | Beyond-the-keyboard list |
+| `roadmap.md` | Numbered build roadmap |
+| `toolkit.md` | Toolkit entries in `label | value` format |
+| `contact.md` | Contact links written as `[label](href)` |
+
+Each file has frontmatter for its section type, title, and description. The build
+validates the required files and fields, so content mistakes are reported before
+deployment. TSX defines the visual layout and interaction behavior; Markdown owns
+the words and lists displayed inside it.
+
 ### Collapsible Code Blocks
 
 Use a code fence language prefixed with `collapse-`:

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test'
 import { getTableOfContents, normalizeHeadingText } from '../src/utils/headings'
 import { createSlugger } from '../src/utils/slug'
+import { parseHomeDocument } from '../src/features/home/data/home-content'
 
 describe('content utilities', () => {
   test('normalizes heading formatting before creating anchor text', () => {
@@ -29,6 +30,22 @@ describe('content utilities', () => {
     expect(getTableOfContents(markdown)).toEqual([
       { level: 2, text: 'First section', id: 'first-section' },
       { level: 3, text: 'Nested section', id: 'nested-section' },
+    ])
+  })
+
+  test('parses a home section from Markdown without JSX content', () => {
+    const document = parseHomeDocument(`---
+type: toolkit
+title: Toolkit
+description: Current setup
+---
+- Editors | VS Code
+- Shells | zsh
+`, 'toolkit.md')
+
+    expect(document.toolkitItems).toEqual([
+      { label: 'Editors', value: 'VS Code' },
+      { label: 'Shells', value: 'zsh' },
     ])
   })
 })

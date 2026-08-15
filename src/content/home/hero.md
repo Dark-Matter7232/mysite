@@ -1,10 +1,10 @@
 ---
 type: hero
 eyebrow: Anurag Rai / Const Coccinelle / Dark-Matter7232
-title: Learning cybersecurity from zero, in the open.
-description: An honest log of Anurag Rai's transition into cybersecurity.
+title: Embedded enthusiast, just a beginner for now.
+description: An honest log of Anurag Rai's move into embedded development.
 seoTitle: Anurag Rai | Portfolio
-seoDescription: Anurag Rai's portfolio documenting his transition from systems work to full stack development with projects, roadmap, reading notes, and technical focus areas.
-badges: ["Cybersecurity beginner", "Linux-first", "Learning in the open", "Windows + WSL workflow"]
+seoDescription: Anurag Rai's portfolio documenting his work with embedded C, STM32 development, developer tooling, Linux, and hardware projects.
+badges: ["Embedded C learner", "STM32 development", "Linux-first", "Learning in the open"]
 ---
-Hey, I'm Anurag Rai: a 20-year-old Computer Science undergrad, Linux geek, audiophile, and tinkerer. For the last few years I have been comfortable in systems work, terminals, and small Unix-style utilities. I am now pivoting into cybersecurity. I have no prior security experience and I am not going to pretend otherwise. I do not know what most of this field looks like yet. What I do have is a goal, the patience to read, and a willingness to fail labs in public until things start to click. This site is the honest log of that beginning.
+Hey, I'm Anurag Rai: a Computer Science undergrad, Linux geek, audiophile, and tinkerer. These days I am learning embedded C and getting deeper into embedded development with an STM32F411CEU6 WeAct 3.0 board. I have already soldered the headers onto the board, brought up a Hello World blinky that encodes each letter with a blink and a longer pause for spaces, and got printf debugging working over UART. I am learning by building small things, understanding the hardware underneath them, and documenting what breaks along the way.

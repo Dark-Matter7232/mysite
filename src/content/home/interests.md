@@ -8,4 +8,4 @@ description: A few things that keep my perspective broad while I learn.
 - Geopolitical history deep dives
 - Mechanical keyboards and sound profiles
 - Music and critical listening
-- Living with ADHD and frequent migraines while learning to build sustainable focus and pacing into my work
+- Learning to work sustainably with ADHD and migraines

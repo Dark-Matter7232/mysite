@@ -1,6 +1,5 @@
 import fs from "fs/promises";
 import path from "path";
-import sharp from "sharp";
 import os from "os";
 
 const DIR_PUBLIC = path.join(process.cwd(), "public");
@@ -14,6 +13,31 @@ async function walkDir(dir: string): Promise<string[]> {
     })
   );
   return Array.prototype.concat(...files);
+}
+
+function isUnsupportedAvif(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "ERR_IMAGE_FORMAT_UNSUPPORTED"
+  );
+}
+
+async function writeAvifWithFallback(source: string, destination: string): Promise<void> {
+  try {
+    await Bun.file(source).image().avif({ quality: 80 }).write(destination);
+    return;
+  } catch (error) {
+    if (!isUnsupportedAvif(error)) {
+      throw error;
+    }
+  }
+
+  // Bun's native AVIF encoder is platform-dependent. Keep AVIF output
+  // portable by falling back to Sharp only where Bun cannot encode it.
+  const { default: sharp } = await import("sharp");
+  await sharp(source).avif({ quality: 80, effort: 6 }).toFile(destination);
 }
 
 async function optimizeImages() {
@@ -37,18 +61,16 @@ async function optimizeImages() {
       const webpFile = file.replace(new RegExp(`${ext}$`, 'i'), '.webp');
       const isWebpSource = ext.toLowerCase() === '.webp';
       
-      // Create AVIF
       try {
-        await sharp(file)
-          .avif({ quality: 80, effort: 6 })
-          .toFile(avifFile);
+        await writeAvifWithFallback(file, avifFile);
         console.log(`✅ Optimized (AVIF): ${path.relative(DIR_PUBLIC, avifFile)}`);
         
         // Create WebP as fallback (only if source is not already WebP)
         if (!isWebpSource) {
-          await sharp(file)
-            .webp({ quality: 80, effort: 6 })
-            .toFile(webpFile);
+          await Bun.file(file)
+            .image()
+            .webp({ quality: 80 })
+            .write(webpFile);
           console.log(`✅ Optimized (WebP): ${path.relative(DIR_PUBLIC, webpFile)}`);
         } else {
           console.log(`⏭️  Skipped generation (already WebP): ${path.relative(DIR_PUBLIC, file)}`);

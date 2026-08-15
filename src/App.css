@@ -101,13 +101,20 @@
   cursor: pointer;
 }
 
-.top-nav a:hover,
 .top-nav a.active,
-.top-nav button:hover,
 .top-nav button.active {
   border-color: var(--highlight);
   color: var(--text-h);
   background: rgba(255, 122, 89, 0.16);
+}
+
+@media (hover: hover) {
+  .top-nav a:hover,
+  .top-nav button:hover {
+    border-color: var(--highlight);
+    color: var(--text-h);
+    background: rgba(255, 122, 89, 0.16);
+  }
 }
 
 .eyebrow {

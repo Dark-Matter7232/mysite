@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3840" height="2880" viewBox="0 0 3840 2880" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="coral" cx="8%" cy="8%" r="58%">
+      <stop offset="0" stop-color="#ff7a59" stop-opacity=".30"/>
+      <stop offset=".58" stop-color="#ff7a59" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#ff7a59" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="blue" cx="85%" cy="12%" r="52%">
+      <stop offset="0" stop-color="#60a5fa" stop-opacity=".30"/>
+      <stop offset=".58" stop-color="#60a5fa" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#60a5fa" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="teal" cx="45%" cy="85%" r="56%">
+      <stop offset="0" stop-color="#2dd4bf" stop-opacity=".25"/>
+      <stop offset=".58" stop-color="#2dd4bf" stop-opacity=".10"/>
+      <stop offset="1" stop-color="#2dd4bf" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="base" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a1327"/>
+      <stop offset="1" stop-color="#060f1b"/>
+    </linearGradient>
+    <filter id="soften" x="-12%" y="-12%" width="124%" height="124%">
+      <feGaussianBlur stdDeviation="20"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="1200" fill="url(#base)"/>
+  <g filter="url(#soften)">
+    <rect width="1600" height="1200" fill="url(#coral)"/>
+    <rect width="1600" height="1200" fill="url(#blue)"/>
+    <rect width="1600" height="1200" fill="url(#teal)"/>
+  </g>
+</svg>

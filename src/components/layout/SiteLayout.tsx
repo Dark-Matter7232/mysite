@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 const BLOG_RETURN_PATH_KEY = 'blogReturnPath'
@@ -8,6 +9,33 @@ function SiteLayout() {
   const isHome = location.pathname === '/'
   const isBlogIndex = location.pathname === '/blog'
   const isBlogPost = location.pathname.startsWith('/blog/')
+
+  useEffect(() => {
+    const nav = navigator as Navigator & {
+      deviceMemory?: number
+      connection?: { saveData?: boolean }
+    }
+    const lowPower =
+      (nav.deviceMemory !== undefined && nav.deviceMemory <= 4) ||
+      (nav.hardwareConcurrency !== undefined && nav.hardwareConcurrency <= 4) ||
+      nav.connection?.saveData === true
+    const coarseQuery = window.matchMedia('(pointer: coarse)')
+    const narrowQuery = window.matchMedia('(max-width: 860px)')
+    const updateAmbientMode = () => {
+      const mobile = coarseQuery.matches || narrowQuery.matches
+      document.documentElement.classList.toggle('static-ambient', mobile || lowPower)
+    }
+
+    updateAmbientMode()
+    coarseQuery.addEventListener('change', updateAmbientMode)
+    narrowQuery.addEventListener('change', updateAmbientMode)
+
+    return () => {
+      coarseQuery.removeEventListener('change', updateAmbientMode)
+      narrowQuery.removeEventListener('change', updateAmbientMode)
+      document.documentElement.classList.remove('static-ambient')
+    }
+  }, [])
 
   function handleHomeClick(e: React.MouseEvent) {
     if (isBlogPost) {

@@ -226,6 +226,10 @@ h1 {
   background: var(--tile-bg);
 }
 
+.list-panel li:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
 .list-panel span {
   color: var(--text-h);
 }

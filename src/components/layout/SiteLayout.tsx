@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
-
-const BLOG_RETURN_PATH_KEY = 'blogReturnPath'
+import { BLOG_RETURN_PATH_KEY, getBlogDestination, getBlogReturnPath } from './navigation'
 
 function SiteLayout() {
   const location = useLocation()
@@ -42,8 +41,9 @@ function SiteLayout() {
   }, [])
 
   function handleHomeClick() {
-    if (isBlogPost) {
-      sessionStorage.setItem(BLOG_RETURN_PATH_KEY, location.pathname)
+    const returnPath = getBlogReturnPath(location.pathname)
+    if (returnPath) {
+      sessionStorage.setItem(BLOG_RETURN_PATH_KEY, returnPath)
     }
   }
 
@@ -53,14 +53,17 @@ function SiteLayout() {
       return
     }
 
-    const returnPath = sessionStorage.getItem(BLOG_RETURN_PATH_KEY)
-    if (!returnPath) {
+    const destination = getBlogDestination(
+      location.pathname,
+      sessionStorage.getItem(BLOG_RETURN_PATH_KEY),
+    )
+    if (destination === '/blog') {
       return
     }
 
     e.preventDefault()
     sessionStorage.removeItem(BLOG_RETURN_PATH_KEY)
-    navigate(returnPath)
+    navigate(destination)
   }
 
   return (

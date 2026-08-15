@@ -76,6 +76,12 @@ Run lint checks:
 bun run lint
 ```
 
+Run the test suite:
+
+```bash
+bun run test
+```
+
 Regenerate optimized image assets:
 
 ```bash

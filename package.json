@@ -9,6 +9,7 @@
     "prebuild": "bun run blog:meta && bun run sitemap:generate && bun run rss:generate && bun run assets:optimize",
     "build": "bunx --bun tsc -b && bunx --bun vite build --outDir dist/static && bunx --bun vite build --ssr src/entry-server.tsx --outDir dist/server && bun run scripts/prerender.ts && cp -r dist/static/* dist/ && rm -rf dist/static dist/server",
     "lint": "bunx --bun eslint .",
+    "test": "bun test",
     "preview": "bunx --bun vite preview",
     "deploy": "bun run build && bunx wrangler pages deploy dist",
     "blog:new": "bun run scripts/new-blog.ts",

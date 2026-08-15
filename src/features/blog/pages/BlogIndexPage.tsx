@@ -50,7 +50,7 @@ function BlogIndexPage() {
     <section className="section reveal">
       <div className="section-head">
         <h1>{blogIndexContent.title}</h1>
-        <p>{blogIndexContent.description} {blogIndexContent.sourceNote}</p>
+        <p>{blogIndexContent.description}</p>
       </div>
 
       {posts.length === 0 ? (

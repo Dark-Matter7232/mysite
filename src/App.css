@@ -281,6 +281,13 @@ h1 {
     align-items: center;
     text-align: center;
   }
+
+  .card-grid li:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: calc((100% - 0.85rem) / 2);
+    text-align: left;
+  }
 }
 
 .toolkit-list strong {

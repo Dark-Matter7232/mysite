@@ -6,7 +6,6 @@ import {
 export type BlogIndexContent = {
   title: string
   description: string
-  sourceNote: string
   filterLabel: string
   emptyPostsLabel: string
   emptyFilterLabel: string
@@ -33,7 +32,6 @@ function parseBlogIndexContent(raw: string): BlogIndexContent {
   return {
     title: requiredString(data, 'title'),
     description: requiredString(data, 'description'),
-    sourceNote: requiredString(data, 'sourceNote'),
     filterLabel: requiredString(data, 'filterLabel'),
     emptyPostsLabel: requiredString(data, 'emptyPostsLabel'),
     emptyFilterLabel: requiredString(data, 'emptyFilterLabel'),

@@ -3,6 +3,7 @@ type: reading
 title: Reading Shelf
 description: Reading keeps me steady and curious when code gets chaotic.
 ---
+- The Indian Trilogy | V.S. Naipaul | I finished this series on my Kobo Libra Colour. It left me with the same contradictions and frustration Naipaul felt in 1962: the more things change, the more they remain the same.
 - The Last Girl | Nadia Murad | This made me aware of the Yazidi genocide and how politics and religion shape real lives.
 - Bhagavad-Gita As It Is | A.C. Bhaktivedanta Swami Prabhupada | I respect its impact, but this interpretation did not sit right with me, and I still prefer a more orthodox reading of the source text.
 - The Kite Runner | Khaled Hosseini | This book broke me, Hassan's suffering and his unwavering loyalty changed how I think about love, dignity, and pain.
